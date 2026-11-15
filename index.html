@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RSL GFX Studio</title>
 <meta name="rsl-site" content="1">
-<meta name="rsl-build" content="1794774215">
+<meta name="rsl-build" content="1794774491">
 <meta name="rsl-pass" content="5492dcdcf24546ce707e4c6e370ab4a0736d0defa0cbbf6f66798e57a309c6a1">
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -158,14 +158,14 @@ body.team #nav{display:none}
 #gate{position:fixed;inset:0;z-index:50;background:radial-gradient(900px 500px at 0% 100%,rgba(31,46,74,.45),transparent 60%),#000;display:grid;place-items:center;padding:20px}
 #gate form{width:min(360px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
 #gate img{width:96px;height:96px;object-fit:contain;margin-bottom:6px}
-#gate b{font:900 26px/1 var(--head);text-transform:uppercase}#gate small{color:var(--mut);font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px}
+#gate b{font:900 26px/1 var(--head);text-transform:uppercase;margin-bottom:14px}#gate small{color:var(--mut);font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px}
 #gate input{width:100%;text-align:center;font-size:18px;letter-spacing:.2em;padding:14px}#gate .btn{width:100%;padding:13px}#gate p{color:#ff8a87;min-height:1.2em;margin:4px 0 0;font-size:13px}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px;border:2px solid #000}::-webkit-scrollbar-track{background:#000}
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="brand"><img src="assets/rsl_logo.png" alt=""><div><b>GFX Studio</b><small>Roshn Saudi League</small></div></div>
+  <div class="brand"><img src="assets/rsl_logo.png" alt=""><div><b>GFX Studio</b></div></div>
   <nav id="nav">
     <button data-view="studio" class="on">Studio</button>
     <button data-view="matches">Fixtures &amp; Results</button>
@@ -745,7 +745,7 @@ async function saveBlob(name,blob){
  const url=URL.createObjectURL(blob);const isImg=blob.type.startsWith('image/');
  openDlg(`<h2>${esc(name)}</h2><p class="note" style="margin-top:0">${isImg?'Right-click the image (or long-press on a phone) and choose Save.':'Click the link to download.'}</p>${isImg?`<img src="${url}" alt="">`:`<p><a class="btn pri" href="${url}" download="${esc(name)}">Download ${esc(name)}</a></p>`}<div class="btns"><button class="btn" data-close>Close</button></div>`);}
 function collectImgs(o){const l=[A.tableBg,A.rsl,A.panel,A.panelMW,A.ftBox,A.ftBoxTall,...Object.keys(A.photo).map(photoSrc)];S.teams.forEach(t=>{l.push(logoColor(t),logoMono(t));});return l.filter(Boolean);}
-function exportScale(o){return 1;} // export at the PSD's full size
+function exportScale(o){return 2160/TEMPLATES[o.tpl].W;} // every export is 2160 px wide (2x of 1080)
 function fileName(o){return fileName0(o)+(o.lang==='ar'?'_AR':'');}
 function fileName0(o){if(o.tpl==='ft'){const m=ftMatch(o);return `RSL_FullTime_MW${pad2(o.mw)}_${m?(team(m.home)?.short+'-'+team(m.away)?.short):''}`;}
  if(o.tpl==='table')return `RSL_Table_MW${pad2(tableRows(o).mw)}`;const T=TEMPLATES[o.tpl];return `RSL_${T.fix?'Fixtures':'Results'}_MW${pad2(o.mw)}${T.day?'_'+weekday(o.day):''}`;}
@@ -862,7 +862,7 @@ async function selfUpdate(){try{const me=(document.querySelector('meta[name="rsl
  if(m&&m[1]!==me&&sessionStorage.getItem('rsl-reloaded')!==m[1]){sessionStorage.setItem('rsl-reloaded',m[1]);location.replace(location.pathname+'?v='+m[1]);}}catch(e){}}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 function gate(){const H=(document.querySelector('meta[name="rsl-pass"]')||{}).content;if(!H||lsGet('rsl-pass')===H)return;
- const g=document.createElement('div');g.id='gate';g.innerHTML=`<form><img src="assets/rsl_logo.png" alt=""><b>GFX Studio</b><small>Roshn Saudi League</small><input type="password" placeholder="Team password" autocomplete="current-password"><button class="btn pri" type="submit">Enter</button><p></p></form>`;
+ const g=document.createElement('div');g.id='gate';g.innerHTML=`<form><img src="assets/rsl_logo.png" alt=""><b>GFX Studio</b><input type="password" placeholder="Team password" autocomplete="current-password"><button class="btn pri" type="submit">Enter</button><p></p></form>`;
  document.body.appendChild(g);const inp=g.querySelector('input');setTimeout(()=>inp.focus(),50);
  g.querySelector('form').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim().replace(/[\u0660-\u0669]/g,d=>d.charCodeAt(0)-0x660).replace(/[\u06F0-\u06F9]/g,d=>d.charCodeAt(0)-0x6F0);if(await sha(v)===H){lsSet('rsl-pass',H);g.remove();}else{g.querySelector('p').textContent='Wrong password';inp.select();}};}
 document.body.classList.add('team');
