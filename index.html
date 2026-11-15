@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RSL GFX Studio</title>
 <meta name="rsl-site" content="1">
+<meta name="rsl-build" content="1794774145">
 <meta name="rsl-pass" content="13af54b2ccc64ee1ab317abddcb23d15d8a82b33d2aa58ba331131c2b1a0ffcb">
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -854,7 +855,11 @@ function fromHash(){const h=location.hash.slice(1);if(['studio','matches','teams
 window.addEventListener('hashchange',fromHash);
 function renderAll(){renderStudio();renderMatches();renderTeams();renderSettings();}
 renderAll();fromHash();setSync(SITE?'loading':'local');
-if(SITE){gate();const n=$('#sc-save-note');if(n)n.textContent='Scorers fill in automatically; changes here only affect your graphic.';}
+if(SITE){selfUpdate();gate();const n=$('#sc-save-note');if(n)n.textContent='Scorers fill in automatically; changes here only affect your graphic.';}
+// Website: if a newer version of this page has been published, load it (browsers keep an old copy for up to 10 minutes).
+async function selfUpdate(){try{const me=(document.querySelector('meta[name="rsl-build"]')||{}).content;if(!me)return;
+ const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/name="rsl-build" content="([^"]+)"/);
+ if(m&&m[1]!==me&&sessionStorage.getItem('rsl-reloaded')!==m[1]){sessionStorage.setItem('rsl-reloaded',m[1]);location.replace(location.pathname+'?v='+m[1]);}}catch(e){}}
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 function gate(){const H=(document.querySelector('meta[name="rsl-pass"]')||{}).content;if(!H||lsGet('rsl-pass')===H)return;
  const g=document.createElement('div');g.id='gate';g.innerHTML=`<form><img src="assets/rsl_logo.png" alt=""><b>GFX Studio</b><small>Roshn Saudi League</small><input type="password" placeholder="Team password" autocomplete="current-password"><button class="btn pri" type="submit">Enter</button><p></p></form>`;
