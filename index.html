@@ -859,7 +859,7 @@ async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncod
 function gate(){const H=(document.querySelector('meta[name="rsl-pass"]')||{}).content;if(!H||lsGet('rsl-pass')===H)return;
  const g=document.createElement('div');g.id='gate';g.innerHTML=`<form><img src="assets/rsl_logo.png" alt=""><b>GFX Studio</b><small>Roshn Saudi League</small><input type="password" placeholder="Team password" autocomplete="current-password"><button class="btn pri" type="submit">Enter</button><p></p></form>`;
  document.body.appendChild(g);const inp=g.querySelector('input');setTimeout(()=>inp.focus(),50);
- g.querySelector('form').onsubmit=async e=>{e.preventDefault();if(await sha(inp.value)===H){lsSet('rsl-pass',H);g.remove();}else{g.querySelector('p').textContent='Wrong password';inp.select();}};}
+ g.querySelector('form').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim().replace(/[\u0660-\u0669]/g,d=>d.charCodeAt(0)-0x660).replace(/[\u06F0-\u06F9]/g,d=>d.charCodeAt(0)-0x6F0);if(await sha(v)===H){lsSet('rsl-pass',H);g.remove();}else{g.querySelector('p').textContent='Wrong password';inp.select();}};}
 document.body.classList.add('team');
 (async()=>{let u=null;try{u=window.claude&&window.claude.use?await window.claude.use('user'):null}catch(e){u=null}
  if(!u)return;let ok=false;try{ok=!!(await u.canEdit())||!!(await u.isOwner());}catch(e){}
