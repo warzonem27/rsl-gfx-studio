@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSL GFX Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Readex+Pro:wght@200..700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* ---- RSL brand: Lama Sans Expanded (italic) for titles, Lama Sans for body, Lama Expanded Num for numbers ---- */
+@font-face{font-family:"UI Sans";src:url(assets/fonts/LamaSans-Light.otf);font-weight:300}
+@font-face{font-family:"UI Sans";src:url(assets/fonts/LamaSans-Regular.ttf);font-weight:400}
+@font-face{font-family:"UI Sans";src:url(assets/fonts/LamaSans-Medium.otf);font-weight:500}
+@font-face{font-family:"UI Sans";src:url(assets/fonts/LamaSans-Bold.ttf);font-weight:700}
+@font-face{font-family:"UI Head";src:url(assets/fonts/LamaSans-BlackExpandedItalic.ttf);font-weight:900}
+@font-face{font-family:"UI HeadAr";src:url(assets/fonts/LamaSans-BlackExpanded.otf);font-weight:900}
+@font-face{font-family:"UI Wide";src:url(assets/fonts/LamaSans-ExtraBoldExpanded.otf);font-weight:800}
+@font-face{font-family:"UI Num";src:url(assets/fonts/ExpandedNumbers.otf);font-weight:700}
+:root{
+ --bg:#000;--deep:#06080F;--mid:#0D121F;--slate:#1F2E4A;--navy:#232E42;
+ --panel:#0B0F18;--panel2:#121826;--line:#1C2433;--line2:#2A3549;
+ --txt:#fff;--mut:#8C97AB;--acc:#709BCE;--acc2:#709BCE;--bad:#E52D2C;
+ --red:#E52D2C;--orange:#F3972A;--gold:#DBA51F;--green:#72B52B;--teal:#088676;--sky:#709BCE;--violet:#5E4B8A;--orchid:#B162A2;
+ --head:"UI Head","UI HeadAr","Archivo",sans-serif;--sans:"UI Sans","Readex Pro",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 var(--sans)}
+body{background:
+ radial-gradient(1200px 600px at -10% 110%,rgba(31,46,74,.35),transparent 60%),
+ radial-gradient(900px 500px at 110% -10%,rgba(31,46,74,.18),transparent 60%),#000;background-attachment:fixed;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+::selection{background:var(--gold);color:#000}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:28px;padding:14px 28px;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{display:block;font:900 20px/1 var(--head);text-transform:uppercase;letter-spacing:.01em}
+.brand small{display:block;margin-top:5px;color:var(--mut);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.18em}
+nav{display:flex;gap:4px;background:var(--panel);padding:5px;border-radius:999px;border:1px solid var(--line)}
+nav button{background:none;border:0;padding:8px 18px;border-radius:999px;cursor:pointer;color:var(--mut);font:900 12px/1 var(--head);text-transform:uppercase;letter-spacing:.03em;transition:.15s}
+nav button:hover{color:#fff}
+nav button.on{background:#fff;color:#000}
+.sync{margin-left:auto;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.1em;font-weight:500;background:var(--panel);border:1px solid var(--line);padding:7px 14px;border-radius:999px}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--mut);display:inline-block}
+.sync.ok i{background:var(--green);box-shadow:0 0 10px var(--green)}.sync.warn i{background:var(--gold)}.sync.err i{background:var(--red)}
+
+main{padding:28px;max-width:1560px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+#v-studio.on{display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start}
+@media (max-width:900px){#v-studio.on{grid-template-columns:1fr}main{padding:16px}.top{padding:12px 16px;gap:14px}}
+
+/* panels */
+.panel{background:linear-gradient(160deg,var(--panel2),var(--panel) 60%);border:1px solid var(--line);border-radius:22px;padding:20px}
+.panel h3{margin:0 0 14px;font:900 15px/1 var(--head);text-transform:uppercase;letter-spacing:.01em;color:#fff;display:flex;align-items:center;gap:10px}
+.panel h3::before{content:"";width:6px;height:16px;border-radius:3px;background:var(--gold);transform:skewX(-14deg)}
+.panel+.panel{margin-top:16px}
+
+/* template picker */
+.tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tpl{--c:var(--sky);position:relative;background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 14px;text-align:left;cursor:pointer;overflow:hidden;transition:.15s}
+.tpl::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--c);opacity:.5;transition:.15s}
+.tpl:nth-child(1){--c:var(--gold)}.tpl:nth-child(2){--c:var(--green)}.tpl:nth-child(3){--c:var(--red)}
+.tpl:nth-child(4){--c:var(--sky)}.tpl:nth-child(5){--c:var(--orange)}.tpl:nth-child(6){--c:var(--orchid)}
+.tpl b{display:block;font:900 12px/1.2 var(--head);text-transform:uppercase}
+.tpl span{display:block;margin-top:4px;font-size:11px;color:var(--mut)}
+.tpl:hover{border-color:var(--line2)}
+.tpl.on{background:#fff;border-color:#fff}
+.tpl.on b{color:#000}.tpl.on span{color:#4b5468}.tpl.on::before{opacity:1;width:5px}
+
+/* forms */
+label.f{display:block;margin:14px 0 0}
+label.f>span{display:block;font-size:10px;font-weight:500;color:var(--mut);margin-bottom:6px;text-transform:uppercase;letter-spacing:.14em}
+input[type=text],input[type=password],input[type=number],input[type=date],input[type=time],select,textarea{width:100%;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none;transition:.15s}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8C97AB 50%),linear-gradient(135deg,#8C97AB 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+input:focus,select:focus,textarea:focus{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+textarea{resize:vertical}
+input[type=color]{width:42px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--deep);padding:3px;cursor:pointer}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:var(--line2);outline:none;margin:10px 0 4px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 1px #fff;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 1px #fff;cursor:pointer}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+
+/* buttons */
+.btn{background:var(--deep);border:1px solid var(--line2);padding:10px 16px;border-radius:999px;cursor:pointer;font:900 11px/1.2 var(--head);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;display:inline-block;transition:.15s}
+.btn:hover{border-color:#fff}
+.btn.pri{background:#fff;color:#000;border-color:#fff}
+.btn.pri:hover{background:var(--gold);border-color:var(--gold)}
+.btn.sm{padding:7px 12px;font-size:10px}
+.btn.ghost{background:none}
+.btn.danger{color:#ff8a87;border-color:#4a1d1d}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+
+/* preview stage */
+.stage{background:var(--deep);border:1px solid var(--line);border-radius:22px;padding:28px;display:flex;justify-content:center;align-items:flex-start;min-height:400px;position:relative;overflow:hidden}
+.stage::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 0%,rgba(112,155,206,.10),transparent 70%);pointer-events:none}
+#cv{position:relative;max-width:100%;max-height:calc(100vh - 160px);height:auto;box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.06);border-radius:10px}
+.note{font-size:12px;color:var(--mut);margin:12px 0 0}
+.banner{background:rgba(219,165,31,.1);border:1px solid rgba(219,165,31,.35);color:#f0d28a;border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:13px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .grow{flex:1}
+
+/* tables */
+table.data{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+table.data th{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);text-align:left;padding:12px 10px;background:var(--deep);font-weight:500}
+table.data td{padding:7px 10px;border-top:1px solid var(--line)}
+table.data tr:hover td{background:rgba(255,255,255,.02)}
+table.data input,table.data select{padding:7px 10px;border-radius:10px}
+td.sc input{width:58px;text-align:center;font:700 16px/1 "UI Num",var(--sans)}
+.vs{color:var(--mut);text-align:center}
+
+/* clubs */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.tcard{background:linear-gradient(160deg,var(--panel2),var(--panel) 60%);border:1px solid var(--line);border-radius:18px;padding:14px}
+.tcard .hd{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.logo-drop{width:68px;height:68px;border-radius:16px;background:var(--deep);border:1px dashed var(--line2);display:grid;place-items:center;cursor:pointer;overflow:hidden;flex:none;font:900 11px var(--head);position:relative}
+.logo-drop img{width:82%;height:82%;object-fit:contain}
+.logo-drop em{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-style:normal;font-size:9px;color:rgba(255,255,255,.8);text-shadow:0 1px 2px #000}
+.tcard input{padding:7px 10px;margin-top:6px}
+.ar{font-family:"UI Sans","Readex Pro",sans-serif;direction:rtl}
+
+/* dialogs, toast */
+.dlg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.dlg.on{display:flex}
+.dlg .box{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:24px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
+.dlg h2{margin:0 0 10px;font:900 20px/1.1 var(--head);text-transform:uppercase}
+.dlg img{max-width:100%;border-radius:10px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#000;font-weight:500;padding:11px 20px;border-radius:999px;opacity:0;transition:.2s;pointer-events:none;z-index:30}
+#toast.on{opacity:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+code{background:var(--deep);border:1px solid var(--line);padding:2px 6px;border-radius:6px;font-size:12px}
+.mini{width:100%;border-collapse:collapse;font-size:13px}
+.mini td,.mini th{padding:5px 6px;border-top:1px solid var(--line);text-align:center}
+.mini td:nth-child(2),.mini th:nth-child(2){text-align:left}
+.mini th{color:var(--mut);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.1em;border-top:0}
+.fontrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.fontrow:first-of-type{border-top:0}
+.fontrow b{font-size:13px;display:block;font-weight:500}.fontrow small{color:var(--mut);font-size:11px}
+.fontrow .st{margin-left:auto;font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(219,165,31,.12);color:#f0d28a;text-transform:uppercase;letter-spacing:.08em}
+.fontrow .st.ok{background:rgba(114,181,43,.14);color:#a6db6d}
+
+.two>.panel+.panel,.two>*+.panel{margin-top:0}
+#v-matches .two{grid-template-columns:1fr;align-items:start}
+@media (max-width:1200px){#v-matches .two{grid-template-columns:1fr}}
+#v-matches .two>div:first-child{overflow-x:auto;border-radius:18px}
+table.data select{min-width:150px}
+table.data input[type=date]{min-width:150px}
+table.data input[type=time]{min-width:118px}
+table.data input[data-f=venue]{min-width:190px}
+#mw-pick{min-width:180px}
+body.team #nav{display:none}
+#gate{position:fixed;inset:0;z-index:50;background:radial-gradient(900px 500px at 0% 100%,rgba(31,46,74,.45),transparent 60%),#000;display:grid;place-items:center;padding:20px}
+#gate form{width:min(360px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+#gate img{width:96px;height:96px;object-fit:contain;margin-bottom:6px}
+#gate b{font:900 26px/1 var(--head);text-transform:uppercase;margin-bottom:14px}#gate small{color:var(--mut);font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px}
+#gate input{width:100%;text-align:center;font-size:18px;letter-spacing:.2em;padding:14px}#gate .btn{width:100%;padding:13px}#gate p{color:#ff8a87;min-height:1.2em;margin:4px 0 0;font-size:13px}
+@media (min-width:901px){#v-studio .stage{position:sticky;top:96px}} /* keep the preview in view while scrolling the options */
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px;border:2px solid #000}::-webkit-scrollbar-track{background:#000}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="assets/rsl_logo.png" alt=""><div><b>GFX Studio</b></div></div>
+  <nav id="nav">
+    <button data-view="studio" class="on">Studio</button>
+    <button data-view="matches">Fixtures &amp; Results</button>
+    <button data-view="teams">Clubs</button>
+    <button data-view="settings">Fonts &amp; Settings</button>
+  </nav>
+  <div id="sync" class="sync"><i></i><span>Starting…</span></div>
+</header>
+
+<main>
+<!-- STUDIO -->
+<section id="v-studio" class="view on">
+  <div>
+    <div class="panel">
+      <h3>Template</h3>
+      <div class="tpls" id="tpls"></div>
+    </div>
+    <div class="panel">
+      <h3>Options</h3>
+      <label class="f" id="o-tsize-wrap"><span id="o-tsize-l">Layout</span><select id="o-tsize"></select></label>
+      <label class="f" id="o-lang-wrap"><span>Language</span><select id="o-lang"><option value="en">English</option><option value="ar">العربية (Arabic)</option></select></label>
+      <label class="f"><span>Matchweek</span><select id="o-mw"></select></label>
+      <div id="o-ft-wrap">
+        <label class="f"><span>Match</span><select id="o-ftmatch"></select></label>
+        <div class="row" style="align-items:flex-start"><label class="f"><span id="o-hsc-l">Home scorers</span><textarea id="o-hsc" rows="3" placeholder="Ronaldo 64"></textarea></label><label class="f"><span id="o-asc-l">Away scorers</span><textarea id="o-asc" rows="3" placeholder="Ronaldo 64"></textarea></label></div>
+        <p class="note" style="margin-top:4px">One goal per line: name, then minute, e.g. <code>Ronaldo 64</code>, <code>Toney 90+3 (P)</code>. <span id="sc-save-note">Saved with the match for everyone.</span></p>
+      </div>
+      <label class="f" id="o-day-wrap"><span>Match day</span><select id="o-day"></select></label>
+      <label class="f" id="o-src-wrap"><span>Table source</span><select id="o-src"><option value="official">Official SAFF table (synced)</option><option value="calc">Calculated from results here</option></select></label>
+      <label class="f"><span id="o-title-lbl">Title (leave empty for automatic)</span><input type="text" id="o-title" placeholder="Automatic"></label>
+      <label class="f" id="o-daylbl-wrap"><span>Day label (leave empty for automatic)</span><input type="text" id="o-daylbl" placeholder="Automatic"></label>
+      <div id="o-ach-wrap">
+        <label class="f"><span>Title (Enter for a new line)</span><textarea id="o-ach-t" rows="2"></textarea></label>
+        <label class="f"><span>Second line (Enter for a new line)</span><textarea id="o-ach-s" rows="2"></textarea></label>
+        <div id="o-ach-box"><label class="f"><span>Box size</span><input type="range" id="o-ach-bs" min="60" max="130" value="100" style="width:100%"></label>
+        <label class="f"><span>Box position (up / down)</span><input type="range" id="o-ach-by" min="-60" max="700" value="0" style="width:100%"></label></div>
+        <div class="btns" id="o-ach-cut"><button class="btn sm pri" id="o-ach-auto" type="button">Cut out player automatically</button><label class="btn sm">Upload my own cut-out<input type="file" accept="image/png,image/webp" data-slot="achP" hidden></label></div>
+        <p class="note" id="o-ach-note">Upload the photo with "Upload photo" below: the player is cut out automatically and placed in front of the box. <span id="o-ach-status"></span></p>
+      </div>
+      <div id="o-cmp-wrap">
+        <div id="o-cmp-players"></div>
+        <label class="f"><span>Stats</span></label><div id="o-cmp-rows"></div>
+        <div class="btns" style="margin-top:8px"><button class="btn sm" id="o-cmp-add" type="button">+ Add row</button></div>
+        <div class="btns"><label class="btn sm">Photo · player 1<input type="file" accept="image/*" data-slot="cmp1" hidden></label><label class="btn sm">Photo · player 2<input type="file" accept="image/*" data-slot="cmp2" hidden></label></div>
+      </div>
+      <div id="o-gs-wrap">
+        <div class="row"><label class="f"><span>Players</span><select id="o-gsn"><option value="5">Top 5</option><option value="4">Top 4</option><option value="3">Top 3</option><option value="2">Top 2</option></select></label>
+        <label class="f"><span>Photos</span><select id="o-gssplit"><option value="0">One photo</option><option value="1">One per player</option></select></label></div>
+        <div id="o-gs-names"></div>
+        <div class="btns" id="o-gs-uploads"></div>
+      </div>
+      <div id="o-photo-wrap">
+        <label class="f"><span>Photo. Uploads reset to the default photo when you refresh.</span></label>
+        <div class="btns" style="margin-top:4px"><label class="btn sm">Upload photo<input type="file" id="o-photo" accept="image/*" hidden></label></div>
+        <label class="f"><span>Photo position (up / down)</span><input type="range" id="o-photo-y" min="0" max="100" value="30" style="width:100%"></label>
+        <label class="f"><span>Photo size</span><input type="range" id="o-photo-z" min="100" max="250" value="100" style="width:100%"></label>
+        <label class="f" id="o-photo-x-wrap"><span>Photo position (left / right)</span><input type="range" id="o-photo-x" min="0" max="100" value="50" style="width:100%"></label>
+        <div class="btns"><button class="btn sm" id="o-photo-reset" type="button">Reset photo size and position</button></div>
+      </div>
+      <div class="btns">
+        <button class="btn pri" id="b-png">Download JPG</button>
+        <button class="btn" id="b-zip">Every day this matchweek (.zip)</button>
+      </div>
+      <p class="note" id="o-hint"></p>
+    </div>
+  </div>
+  <div class="stage"><canvas id="cv" width="1080" height="1440"></canvas></div>
+</section>
+
+<!-- MATCHES -->
+<section id="v-matches" class="view">
+  <div class="banner" id="sched-banner">The schedule below is a <b>placeholder</b> made by the round-robin generator. The official fixtures load automatically once the SAFF sync has run.</div>
+  <div class="note" id="sync-stamp" style="margin:0 0 12px"></div>
+  <div class="toolbar">
+    <button class="btn sm" id="mw-prev">◀</button>
+    <select id="mw-pick" style="width:auto"></select>
+    <button class="btn sm" id="mw-next">▶</button>
+    <span class="grow"></span>
+    <button class="btn" id="b-add">+ Add match</button>
+    <button class="btn" id="b-paste">Paste fixtures / results</button>
+    <button class="btn" id="b-gen">Generate season schedule</button>
+  </div>
+  <div class="two">
+    <div>
+      <table class="data"><thead><tr><th>Date</th><th>Time</th><th>Home</th><th colspan="3" style="text-align:center">Score</th><th>Away</th><th>Venue</th><th></th></tr></thead><tbody id="mt"></tbody></table>
+      <div class="btns"><button class="btn sm ghost" id="b-clear">Clear scores this matchweek</button></div>
+    </div>
+    <div class="panel"><h3 id="mini-h">Table</h3><table class="mini" id="mini"></table></div>
+  </div>
+</section>
+
+<!-- TEAMS -->
+<section id="v-teams" class="view">
+  <div class="toolbar">
+    <span class="grow note" style="margin:0">Each club has two crests: <b>colour</b> (used on the fixture and result cards, over the club colour) and <b>white</b> (used in the league table). The crests from your PDF and PSD are already loaded. Click a crest to replace it.</span>
+    <button class="btn" id="b-addteam">+ Add club</button>
+  </div>
+  <div class="grid" id="teams"></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="v-settings" class="view">
+  <div class="two">
+    <div class="panel">
+      <h3>Fonts</h3>
+      <p class="note" style="margin-top:0">All fonts from your PSDs are built into the studio, so every graphic uses the same type as the original designs.</p>
+      <div id="fonts"></div>
+    </div>
+    <div class="panel">
+      <h3>League table</h3>
+      <label class="f"><span>Draw a divider line under these positions (comma separated)</span><input type="text" id="s-seps"></label>
+      <h3 style="margin-top:22px">Data</h3>
+      <p class="note" style="margin-top:0">Everything is saved automatically. Use these to back up your data or move it somewhere else.</p>
+      <div class="btns"><button class="btn sm" id="b-export">Export data (.json)</button><label class="btn sm">Import data<input type="file" id="import-file" accept=".json,application/json" hidden></label><button class="btn sm danger" id="b-reset">Reset to defaults</button></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="dlg" id="dlg"><div class="box" id="dlg-box"></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clone=o=>JSON.parse(JSON.stringify(o));
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2800);}
+function lum(hex){const h=(hex||'#000').replace('#','');const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);return 0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255);}
+const pad2=n=>String(n).padStart(2,'0');
+
+/* ============ defaults ============ */
+// 2026/27 Roshn Saudi League clubs. Card colours and crests come from the club-logo PDF; name colours from the fixtures PSD; Arabic names follow the table PSD.
+const TEAMS0=[
+ ['hil','Al Hilal','الهــلال','HIL','#002ce5','#ffffff'],['nas','Al Nassr','النـصــر','NAS','#ffdc00','#042057'],
+ ['itt','Al Ittihad','الاتحـاد','ITT','#fff114','#000000'],['ahl','Al Ahli','الأهلي','AHL','#009753','#ffffff'],
+ ['qad','Al Qadsiah','القادسية','QAD','#e21b1b','#ffe700'],['ett','Al Ettifaq','الاتفـاق','ETT','#056049','#ffffff'],
+ ['taa','Al Taawoun','التعـاون','TAA','#fbdd00','#022b6b'],['sha','Al Shabab','الشبـاب','SHA','#f2f2f2','#000000'],
+ ['fat','Al Fateh','الفـتـح','FAT','#0025ff','#ffffff'],['kha','Al Khaleej','الخليـج','KHA','#fcc805','#006f3e'],
+ ['riy','Al Riyadh','الريـاض','RIY','#e51a1a','#ffffff'],['fay','Al Fayha','الفيحاء','FAY','#e87400','#ffffff'],
+ ['kho','Al Kholood','الخلـود','KHO','#8b002a','#ffffff'],['haz','Al Hazem','الحــزم','HAZ','#fdbc00','#022b6b'],
+ ['neo','NEOM','نيـــوم','NEO','#00aae5','#ffffff'],['abh','Abha','أبـهــا','ABH','#1b457a','#ffffff'],
+ ['fai','Al Faisaly','الفيصلي','FAI','#812726','#ffffff'],['dir','Al Diriyah','الدرعية','DIR','#012b2a','#ddc0a4']
+];
+const KNOWN=new Set(TEAMS0.map(t=>t[0]));
+function defaultSettings(){return{separators:[1,5,6,7,15]};}
+function roundRobin(ids){let t=[...ids];if(t.length%2)t.push(null);const n=t.length,rounds=[];
+ for(let r=0;r<n-1;r++){const pairs=[];for(let i=0;i<n/2;i++){const a=t[i],b=t[n-1-i];if(a&&b)pairs.push(((r+i)%2)?[b,a]:[a,b]);}rounds.push(pairs);t.splice(1,0,t.pop());}
+ return rounds.concat(rounds.map(p=>p.map(([a,b])=>[b,a])));}
+function genSchedule(ids,start,gap,time){const out=[];const d0=new Date(start+'T00:00:00');
+ roundRobin(ids).forEach((pairs,r)=>{const d=new Date(d0);d.setDate(d.getDate()+r*gap);const ds=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  pairs.forEach(([h,a])=>out.push({id:uid(),mw:r+1,date:ds,time,home:h,away:a,venue:'',hs:null,as:null}));});return out;}
+function defaultState(){const teams=TEAMS0.map((t,i)=>({id:t[0],en:t[1],ar:t[2],short:t[3],color:t[4],nameColor:t[5],logo:null,mono:null,adj:0,order:i}));
+ return{settings:defaultSettings(),teams,matches:genSchedule(teams.map(t=>t.id),'2026-08-13',7,'21:00'),placeholder:true};}
+
+/* ============ state & persistence ============ */
+const LS_KEY='rsl-studio-v2';
+let S=null;
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function lsLoad(){try{const j=lsGet(LS_KEY);return j?JSON.parse(j):null}catch(e){return null}}
+function lsSave(){lsSet(LS_KEY,JSON.stringify(S));}
+S=lsLoad()||defaultState();
+S.settings={...defaultSettings(),...S.settings};
+
+let db=null, dbHasData=false, readOnly=false, dirty=new Set(), flushTimer=null, flushing=false;
+const mwPath=mw=>'mws/mw'+pad2(mw);
+function setSync(kind){const el=$('#sync'),sp=el.querySelector('span');el.className='sync';
+ const M={local:['Saved in this browser only','warn'],loading:['Connecting to cloud…',''],saving:['Saving…',''],saved:['Synced to the cloud, shared with your team','ok'],
+  slow:['Cloud not reachable yet; saving in this browser','warn'],error:['Cloud save failed; your changes are kept in this browser','err'],readonly:['View-only: you can make graphics but not edit data','warn']};
+ const m=M[kind]||M.local;sp.textContent=m[0];if(m[1])el.classList.add(m[1]);}
+function markDirty(...paths){lsSave();if(!db||readOnly)return;paths.forEach(p=>dirty.add(p));clearTimeout(flushTimer);flushTimer=setTimeout(flush,800);setSync('saving');}
+function docFor(p){
+ if(p==='league/settings')return{settings:S.settings,placeholder:!!S.placeholder};
+ if(p.startsWith('teams/')){const t=S.teams.find(t=>'teams/'+t.id===p);return t?clone(t):null;}
+ if(p.startsWith('mws/')){const mw=+p.slice(6);return{mw,matches:S.matches.filter(m=>m.mw===mw)};}
+ return null;}
+async function writeDoc(p){const body=docFor(p);if(body)await db.doc(p).set(body);else await db.doc(p).delete();}
+async function flush(){
+ if(flushing){clearTimeout(flushTimer);flushTimer=setTimeout(flush,500);return;}
+ flushing=true;
+ if(!dbHasData){dirty.add('league/settings');S.teams.forEach(t=>dirty.add('teams/'+t.id));mwList().forEach(mw=>dirty.add(mwPath(mw)));}
+ const list=[...dirty];dirty.clear();let failed=null;
+ for(const p of list){
+  try{await writeDoc(p);}
+  catch(e){const code=e&&e.code;
+   if(code==='unavailable'||code==='resource_exhausted'){await sleep(700+Math.random()*700);try{await writeDoc(p);}catch(e2){failed=e2;dirty.add(p);}}
+   else if(code==='invalid_argument'&&p===list[0]){readOnly=true;failed=e;break;}
+   else failed=e;}
+ }
+ if(!failed)dbHasData=true;
+ flushing=false;
+ setSync(readOnly?'readonly':failed?'error':'saved');
+ if(failed&&!readOnly&&failed.code==='quota_exceeded')toast('Cloud storage is full. Try smaller logo files.');
+}
+// Standalone website (GitHub Pages): no Claude; data comes from data/league.json, written by the daily sync.
+const SITE=!!document.querySelector('meta[name="rsl-site"]');
+async function loadSiteData(){try{const r=await fetch('data/league.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return false;const j=await r.json();
+ if(!j||!Array.isArray(j.teams)||!Array.isArray(j.matches))return false;S={...j,settings:{...defaultSettings(),...(j.settings||{})}};lsSave();renderAll();
+ const el=$('#sync');el.className='sync ok';el.querySelector('span').textContent=S.sync&&S.sync.at?'Data updated '+new Date(S.sync.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Data loaded';return true;}catch(e){return false;}}
+async function dbInit(){
+ if(SITE){await loadSiteData();setInterval(loadSiteData,10*60*1000);return;}
+ let d=null;try{d=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){d=null}
+ if(!d){setSync('local');return;}
+ db=d;setSync('loading');const timer=setTimeout(()=>setSync('slow'),10000);
+ try{await loadFromDb();clearTimeout(timer);setSync('saved');if(dirty.size)flush();}
+ catch(e){clearTimeout(timer);setSync('error');return;}
+ // Live updates: reload when club data changes (from a teammate or from Claude).
+ let firstT=true,tT=null;
+ db.collection('teams').onSnapshot(()=>{if(firstT){firstT=false;return;}clearTimeout(tT);tT=setTimeout(()=>{if(!dirty.size&&!flushing)loadFromDb().catch(()=>{});},600);},()=>{});
+ let firstM=true;
+ db.collection('mws').onSnapshot(()=>{if(firstM){firstM=false;return;}clearTimeout(tT);tT=setTimeout(()=>{if(!dirty.size&&!flushing&&document.activeElement?.tagName!=='TEXTAREA')loadFromDb().catch(()=>{});},800);},()=>{});
+ let first=true;
+ db.doc('league/sync').onSnapshot(snap=>{const at=snap.exists?snap.data().at:null;
+  if(first){first=false;return;} if(at&&(!S.sync||S.sync.at!==at)&&!dirty.size&&!flushing){loadFromDb().then(()=>toast('New data synced from SAFF')).catch(()=>{});}},()=>{});
+}
+async function loadFromDb(){
+ const [st,tm,mw,of,sy,gs]=await Promise.all([db.doc('league/settings').get(),db.collection('teams').get(),db.collection('mws').get(),db.doc('league/official').get(),db.doc('league/sync').get(),db.doc('league/scorers').get()]);
+ if(st.exists||!tm.empty){
+  dbHasData=true;const sd=st.exists?clone(st.data()):{};
+  S={settings:{...defaultSettings(),...(sd.settings||{})},placeholder:!!sd.placeholder,
+     teams:tm.docs.map(x=>clone(x.data())).sort((a,b)=>(a.order??0)-(b.order??0)),
+     matches:mw.docs.flatMap(x=>clone(x.data().matches||[])),
+     official:of.exists?clone(of.data()):null,sync:sy.exists?clone(sy.data()):null,scorers:gs.exists?clone(gs.data()):null};
+  lsSave();renderAll();
+ }
+}
+let DL=null;
+(async()=>{try{DL=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){DL=null}})();
+
+/* ============ data helpers ============ */
+const team=id=>S.teams.find(t=>t.id===id);
+const isPlayed=m=>Number.isFinite(m.hs)&&Number.isFinite(m.as);
+function mwList(){const s=new Set(S.matches.map(m=>m.mw));return [...s].sort((a,b)=>a-b);}
+function mwMatches(mw){return S.matches.filter(m=>m.mw===mw).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));}
+function lastPlayedMw(){let r=0;S.matches.forEach(m=>{if(isPlayed(m)&&m.mw>r)r=m.mw});return r||(mwList()[0]||1);}
+function nextMw(){const lp=lastPlayedMw();const l=mwList().filter(m=>m>lp&&S.matches.some(x=>x.mw===m&&!isPlayed(x)));if(l.length)return l[0];
+ let r=Infinity;S.matches.forEach(m=>{if(!isPlayed(m)&&m.mw<r)r=m.mw});return r===Infinity?lp:r;}
+function standings(upto){
+ const T={};S.teams.forEach(t=>T[t.id]={id:t.id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:+t.adj||0});
+ S.matches.filter(m=>m.mw<=upto&&isPlayed(m)&&T[m.home]&&T[m.away]).forEach(m=>{
+  const h=T[m.home],a=T[m.away];h.p++;a.p++;h.gf+=m.hs;h.ga+=m.as;a.gf+=m.as;a.ga+=m.hs;
+  if(m.hs>m.as){h.w++;a.l++;h.pts+=3}else if(m.hs<m.as){a.w++;h.l++;a.pts+=3}else{h.d++;a.d++;h.pts++;a.pts++}});
+ return Object.values(T).sort((x,y)=>y.pts-x.pts||(y.gf-y.ga)-(x.gf-x.ga)||y.gf-x.gf||(team(x.id).en||'').localeCompare(team(y.id).en||''));}
+const CITY={'الرياض':'RIYADH','جدة':'JEDDAH','الدمام':'DAMMAM','أبها':'ABHA','تبوك':'TABUK','بريدة':'BURAIDAH','الرس':'AR RASS','المجمعة':'AL MAJMAAH','الأحساء':'AL AHSA','الخبر':'AL KHOBAR','مكة المكرمة':'MAKKAH','المدينة المنورة':'MADINAH','الطائف':'TAIF','حائل':'HAIL','نجران':'NAJRAN','جازان':'JAZAN','عنيزة':'UNAIZAH','الجبيل':'JUBAIL','خميس مشيط':'KHAMIS MUSHAIT'};
+function cityOf(m){if(m.city)return m.city;const v=m.venue||'';const p=v.match(/\(([^)]+)\)\s*$/);const c=(p?p[1]:v).trim();return CITY[c]||(/[a-z]/i.test(c)?c.toUpperCase():c);}
+const hasAr=s=>/[\u0600-\u06FF]/.test(s||'');
+const CITY_AR=Object.fromEntries(Object.entries(CITY).map(([a,e])=>[e,a]));
+function cityAr(m){if(m.cityAr)return m.cityAr;const v=m.venue||'';const p=v.match(/\(([^)]+)\)\s*$/);const c=(p?p[1]:v).trim();if(hasAr(c))return c;return CITY_AR[(m.city||c).toUpperCase()]||c;}
+// Stadium names: SAFF gives them in Arabic as "Stadium (City)"; English names for the cards.
+const STADIUM_EN={'استاد الأمير محمد بن فهد':'Prince Mohammed bin Fahd Stadium','اس اتش جي ارينا':'SHG Arena','الأول بارك':'Al-Awwal Park',
+ 'استاد مدينة الأمير سلطان بن عبدالعزيز الرياضية':'Prince Sultan bin Abdulaziz Sports City','ملعب نادي التعاون':'Al Taawoun Club Stadium','مدينة المجمعة الرياضية':'Al Majmaah Sports City',
+ 'المملكة أرينا':'Kingdom Arena','استاد مدينة الملك خالد الرياضية':'King Khalid Sports City','ملعب نادي الاتفاق':'Al Ettifaq Club Stadium',
+ 'ملعب الإنماء بمدينة الملك عبدالله الرياضية':'Alinma Stadium','مدينة الأمير فيصل بن فهد الرياضية':'Prince Faisal bin Fahd Sports City','ملعب نادي الحزم':'Al Hazem Club Stadium',
+ 'مدينة الأمير عبدالله الفيصل الرياضية':'Prince Abdullah Al Faisal Sports City','ميدان تمويل الأولى':'Tamweel Aloula Arena','ملعب مدينة الأمير عبدالله بن جلوي الرياضية':'Prince Abdullah bin Jalawi Sports City',
+ 'استاد مدينة الملك عبدالله الرياضية':'King Abdullah Sports City','ملعب الأمير سعود بن جلوي':'Prince Saud bin Jalawi Stadium'};
+const STADIUM_AR={'ملعب الإنماء بمدينة الملك عبدالله الرياضية':'ملعب الإنماء'}; // shorter Arabic names
+// One size for every stadium line: the largest size at which the longest known name still fits on one line.
+const _stadSz={};
+function stadSize(c,ar,maxW){const k=(ar?'ar':'en')+maxW;if(_stadSz[k])return _stadSz[k];c.save();c.direction=ar?'rtl':'ltr';setF(c,FT.arMed,100);
+ const names=ar?Object.keys(STADIUM_EN).map(v=>stadiumOf({venue:v},true)):Object.values(STADIUM_EN).map(v=>v.toUpperCase());
+ const w=Math.max(...names.map(n=>c.measureText(n).width));c.restore();return (_stadSz[k]=Math.floor(100*maxW/w*10)/10);}
+function stadiumOf(m,ar){const v=(m.venue||'').replace(/\([^)]*\)\s*$/,'').trim();if(!v)return '';if(ar){if(!hasAr(v))return '';const k=v.replace(/\s+/g,' ');return STADIUM_AR[k]||k.replace(/^(استاد|ملعب)\s+(?=مدينة)/,'');} // Arabic: drop استاد / ملعب before a مدينة name
+ if(!hasAr(v))return v.toUpperCase();const k=v.replace(/\s+/g,' ');return (STADIUM_EN[k]||'').toUpperCase();}
+function weekdayAr(ds){const d=new Date(ds+'T00:00:00');return isNaN(d)?'':d.toLocaleDateString('ar-u-nu-latn',{weekday:'long'});}
+function ddmm(ds){const d=new Date(ds+'T00:00:00');return isNaN(d)?'':`${d.getDate()}/${d.getMonth()+1}`;}
+function weekday(ds){const d=new Date(ds+'T00:00:00');return isNaN(d)?'':d.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase();}
+function mwDays(mw){return [...new Set(mwMatches(mw).map(m=>m.date).filter(Boolean))].sort();}
+
+/* ============ images & fonts ============ */
+const IMG=new Map();
+function img(src){if(!src)return null;let i=IMG.get(src);if(!i){i=new Image();i.onload=()=>scheduleDraw();i.src=src;IMG.set(src,i);}return i.complete&&i.naturalWidth?i:null;}
+function loadImg(src){return new Promise(res=>{if(!src)return res(null);const i=img(src);if(i)return res(i);const im=IMG.get(src);im.addEventListener('load',()=>res(im),{once:true});im.addEventListener('error',()=>res(null),{once:true});});}
+function readFile(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+async function resizeImage(file,max,type,q){const src=await readFile(file);const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
+ const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);
+ c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL(type||'image/png',q||0.9);}
+const A={tableBg:'assets/table_bg.jpg',rsl:'assets/rsl_logo.png',panel:'assets/panel_day.jpg',panelMW:'assets/panel_mw.jpg',
+ ftBox:'assets/ft_box.png',ftBoxTall:'assets/ft_box_tall.png',
+ panelT4:'assets/panel_top4.jpg',boxAchA:'assets/box_achA.webp',boxAchB:'assets/box_achB.webp',panelCmp:'assets/panel_cmp.jpg',panelGS:'assets/panel_gs.webp',panelThumb:'assets/panel_thumb.jpg',
+ photo:{achA:'assets/photo_achA.jpg',achB:'assets/photo_achB.jpg',achP:'assets/photo_achP.webp',cmp1:'assets/photo_cmp1.jpg',cmp2:'assets/photo_cmp2.jpg',gs:'assets/photo_gs.jpg',gs1:'assets/photo_gs.jpg',gs2:'assets/photo_gs.jpg',gs3:'assets/photo_gs.jpg',gs4:'assets/photo_gs.jpg',gs5:'assets/photo_gs.jpg',top4:'assets/photo_top4.jpg',bot4:'assets/photo_top4.jpg',thumb:'assets/photo_thumb.jpg',ft:'assets/photo_ft.jpg',dayfix:'assets/photo_fixtures.jpg',dayres:'assets/photo_results.jpg',mwfix:'assets/photo_mw_fixtures.jpg',mwres:'assets/photo_mw_results.jpg'}};
+const ASSET_V='12'; // bump when crest or template art files change so browsers don't keep old copies
+// every template image gets the version too, so an updated file always replaces the browser's old copy
+(function vers(o){for(const k in o){if(typeof o[k]==='string'&&o[k].startsWith('assets/'))o[k]+='?v='+ASSET_V;else if(o[k]&&typeof o[k]==='object')vers(o[k]);}})(A);
+const logoColor=t=>t?(t.logo||(KNOWN.has(t.id)?`assets/logos/${t.id}_c.png?v=${ASSET_V}`:null)):null;
+// Built-in crests are full tiles from the club-logos file (crest ≈74% of the tile, as the designer sized them).
+const TILE=0.745;const isTile=(t,f)=>t&&!t[f]&&KNOWN.has(t.id);
+const logoMono=t=>t?(t.mono||(KNOWN.has(t.id)?`assets/logos/${t.id}_w.png?v=${ASSET_V}`:null)||t.logo):null;
+const PHOTO_MEM={};
+// Uploaded photos last until the page is refreshed; then every template goes back to its default photo.
+try{Object.keys(localStorage).filter(k=>k.startsWith('rsl-photo-')).forEach(k=>localStorage.removeItem(k));}catch(e){}
+const photoSrc=k=>PHOTO_MEM[k]||A.photo[k];
+
+// Fonts. Bundled: the Lama Sans faces recovered from your PSD / brand guidelines, and Expanded Numbers.
+// Upload slots cover the faces we don't have complete files for; an uploaded file always takes priority.
+const BUNDLED=[
+ {fam:'RSL-TitleNum',url:'assets/fonts/ExpandedNumbers-Italic.otf',weight:'900',range:'U+0030-0039,U+002F,U+003A,U+002E'},
+ {fam:'RSL-ArTitleNum',url:'assets/fonts/ExpandedNumbers.otf',weight:'900',range:'U+0030-0039,U+002F,U+003A,U+002E'},
+ {fam:'RSL-Title',url:'assets/fonts/LamaSans-BlackExpandedItalic.ttf',weight:'900'},
+ {fam:'LamaSans-ExtraBoldExpanded',url:'assets/fonts/LamaSans-ExtraBoldExpanded.otf',weight:'800'},
+ {fam:'LamaSans-BlackExpanded',url:'assets/fonts/LamaSans-BlackExpanded.otf',weight:'900'},
+ {fam:'LamaSans-Medium',url:'assets/fonts/LamaSans-Medium.otf',weight:'500'},
+ {fam:'LamaSans-Light',url:'assets/fonts/LamaSans-Light.otf',weight:'300'},
+ {fam:'RSL-Num',url:'assets/fonts/ExpandedNumbers.otf',weight:'700'},
+ {fam:'RSL-NumIt',url:'assets/fonts/ExpandedNumbers-Italic.otf',weight:'900'},
+ {fam:'LamaSans-Regular',url:'assets/fonts/LamaSans-Regular.ttf',weight:'400'},
+ {fam:'RSL-Bold',url:'assets/fonts/LamaSans-Bold.ttf',weight:'700'}
+];
+// Every font used by the PSDs is bundled; this list is shown on the Fonts & Settings tab.
+const FONT_LIST=[
+ ['Lama Sans Black Expanded Italic + Expanded Numbers Italic','Titles, MW label, day labels'],
+ ['Lama Sans ExtraBold Expanded','Club names and cities on cards'],
+ ['Expanded Numbers / Italic','Kick-off times / scores'],
+ ['Lama Sans Black Expanded','Table title (الجولة)'],
+ ['Lama Sans Medium','Table club names and numbers'],
+ ['Lama Sans Light','Table header and positions']
+];
+const FONT_SLOTS=[];
+const FT={
+ arTitle:{fam:'"RSL-ArTitleNum","LamaSans-BlackExpanded","Readex Pro",sans-serif',w:900,st:'normal'}, // digits from Expanded Numbers (upright: Arabic titles aren't italic)
+ arMed:{fam:'"LamaSans-Medium","Readex Pro",sans-serif',w:500,st:'normal'},
+ arLight:{fam:'"LamaSans-Light","Readex Pro",sans-serif',w:300,st:'normal'},
+ title:{fam:'"RSL-TitleNum","RSL-Title","Archivo",sans-serif',w:900,st:'extra-expanded'},
+ card:{fam:'"LamaSans-ExtraBoldExpanded","Archivo",sans-serif',w:800,st:'extra-expanded'},
+ num:{fam:'"RSL-Num","Archivo",sans-serif',w:700,st:'extra-expanded'},
+ score:{fam:'"RSL-NumIt","Archivo",sans-serif',w:900,st:'extra-expanded'},
+ bold:{fam:'"RSL-Bold","LamaSans-Medium","Archivo",sans-serif',w:700,st:'normal'},
+ boldAr:{fam:'"LamaSans-ExtraBoldExpanded","Readex Pro",sans-serif',w:800,st:'normal'}
+};
+const loadedFonts={};
+async function loadBundledFonts(){await Promise.all(BUNDLED.map(async b=>{try{const ff=new FontFace(b.fam,`url(${b.url})`,{weight:b.weight,style:'normal',...(b.range?{unicodeRange:b.range}:{})});await ff.load();document.fonts.add(ff);}catch(e){}}));}
+async function registerFont(slot,dataUrl){try{const buf=await (await fetch(dataUrl)).arrayBuffer();const ff=new FontFace(slot.key,buf,{weight:slot.weight,style:slot.style});await ff.load();document.fonts.add(ff);loadedFonts[slot.key]=true;return true;}catch(e){return false;}}
+async function loadStoredFonts(){for(const s of FONT_SLOTS){const d=lsGet('rsl-font-'+s.key);if(d)await registerFont(s,d);}}
+async function fontsReadyFn(){if(!document.fonts)return;const tests=['900 50px Archivo','700 50px Archivo','800 50px Archivo','500 50px "Readex Pro"','300 50px "Readex Pro"','700 50px "Readex Pro"'];
+ try{await Promise.all(tests.map(f=>document.fonts.load(f,'الهلال AL 21:00')));}catch(e){}}
+let fontsReady=loadBundledFonts().then(fontsReadyFn);
+
+
+/* ============ canvas engine (design units = PSD pixels) ============ */
+function setF(c,f,size){c.font=`${f.w} ${Math.round(size*10)/10}px ${f.fam}`;try{c.fontStretch=f.st;}catch(e){}}
+function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect){c.roundRect(x,y,w,h,r);}else{const R=Array.isArray(r)?r:[r,r,r,r];const [tl,tr,br,bl]=R.length===4?R:[R[0],R[0],R[0],R[0]];
+ c.moveTo(x+tl,y);c.lineTo(x+w-tr,y);c.quadraticCurveTo(x+w,y,x+w,y+tr);c.lineTo(x+w,y+h-br);c.quadraticCurveTo(x+w,y+h,x+w-br,y+h);c.lineTo(x+bl,y+h);c.quadraticCurveTo(x,y+h,x,y+h-bl);c.lineTo(x,y+tl);c.quadraticCurveTo(x,y,x+tl,y);c.closePath();}}
+function contain(c,im,cx,cy,w,h){if(!im)return;const s=Math.min(w/im.naturalWidth,h/im.naturalHeight);const dw=im.naturalWidth*s,dh=im.naturalHeight*s;c.drawImage(im,cx-dw/2,cy-dh/2,dw,dh);}
+function cover(c,im,x,y,w,h,fy,z=1,fx=0.5){if(!im)return;const s=Math.max(w/im.naturalWidth,h/im.naturalHeight)*Math.max(1,z);const dw=im.naturalWidth*s,dh=im.naturalHeight*s;c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.drawImage(im,x+(w-dw)*fx,y+(h-dh)*(fy??0.5),dw,dh);c.restore();}
+function fitSize(c,f,str,size,maxW){setF(c,f,size);let s=size;while(s>8&&c.measureText(str).width>maxW){s-=1;setF(c,f,s);}return s;}
+function gradText(c,str,x,base,f,size,{align='left',skew=0,stops=[[0,'#ffffff'],[1,'#ffffff']]}={}){
+ setF(c,f,size);const w=c.measureText(str).width;const x0=align==='right'?x-w:align==='center'?x-w/2:x;
+ c.save();c.translate(x0,base);if(skew)c.transform(1,0,-skew,1,0,0);
+ const g=c.createLinearGradient(0,0,w,0);stops.forEach(([o,col])=>g.addColorStop(o,col));c.fillStyle=g;c.textAlign='left';c.textBaseline='alphabetic';c.fillText(str,0,0);c.restore();return w;}
+function txt(c,str,x,y,f,size,color,align,base,maxW){let s=size;if(maxW)s=fitSize(c,f,str,size,maxW);else setF(c,f,size);c.fillStyle=color;c.textAlign=align||'left';c.textBaseline=base||'alphabetic';c.fillText(str,x,y);return s;}
+
+/* ---- League table (tabel.psd, 3222 × 4295) ---- */
+const TB={W:3222,H:4295,rows:[688,880,1048,1211,1374,1553,1728,1903,2062,2222,2385,2553,2714,2871,3031,3217,3378,3536],
+ cols:[1580,1366,1144,936,702,484],hdrY:570,posX:2727,logoX:2585,nameR:2481,panel:[350,457,2522,3243],rsl:[1466,3850,290,258]};
+function tableRows(o){
+ if(o.src==='official'&&o.rawMw==='auto'&&S.official&&Array.isArray(S.official.rows)&&S.official.rows.length)
+  return{rows:S.official.rows.filter(r=>team(r.id)).map(r=>({...r})),mw:S.official.mw,official:true};
+ return{rows:standings(o.mw),mw:o.mw,official:false};}
+function drawTable(c,o){
+ // Arabic is the PSD layout (right to left); English is its mirror image.
+ const {W,H}=TB;const ar=o.lang==='ar';const X=v=>ar?v:W-v;c.direction=ar?'rtl':'ltr';
+ const bg=img(A.tableBg);if(bg){c.save();if(!ar){c.translate(W,0);c.scale(-1,1);}c.drawImage(bg,0,0,W,H);c.restore();}else{c.fillStyle='#0b111d';c.fillRect(0,0,W,H);}
+ const [px,py,pw,ph]=TB.panel;
+ rr(c,px,py,pw,ph,58);const pg=c.createLinearGradient(0,py,0,py+ph);pg.addColorStop(0,'rgba(80,115,185,0.20)');pg.addColorStop(0.5,'rgba(70,100,165,0.08)');pg.addColorStop(1,'rgba(70,100,165,0.07)');c.fillStyle=pg;c.fill();
+ c.lineWidth=3;c.strokeStyle='rgba(150,180,240,0.16)';c.stroke();
+ const T=tableRows(o);const rows=T.rows.slice(0,18);
+ const centers=TB.rows.map(t=>t+36);
+ (S.settings.separators||[]).forEach(p=>{if(p<1||p>=centers.length)return;const y=Math.round((centers[p-1]+centers[p])/2)-8;
+  c.fillStyle='rgba(95,125,190,0.55)';c.fillRect(px,y-2,pw,4);});
+ const title=o.title||(ar?`الجولة ${T.mw}`:`MW ${T.mw}`);
+ const tf=ar?FT.arTitle:FT.title,tsz=ar?178:fitSize(c,FT.title,title,160,1000);setF(c,tf,tsz);
+ c.save();const tw=c.measureText(title).width;const tx=X(2807);const tg=ar?c.createLinearGradient(tx-tw,0,tx,0):c.createLinearGradient(tx+tw,0,tx,0);tg.addColorStop(0,'#b9c9f2');tg.addColorStop(0.45,'#ffffff');tg.addColorStop(1,'#ffffff');
+ c.fillStyle=tg;c.textAlign=ar?'right':'left';c.textBaseline='alphabetic';c.fillText(title,tx,568);c.restore();
+ // column order: Arabic لعب فاز خسر تعادل +/- نقاط ; English P W D L GD PTS
+ const hdr=ar?['لعب','فاز','خسر','تعادل','+/-','نقاط']:['P','W','D','L','GD','PTS'];
+ hdr.forEach((l,i)=>{c.direction=(ar&&l!=='+/-')?'rtl':'ltr';txt(c,l,X(TB.cols[i]),TB.hdrY,FT.arLight,ar?70:62,'#cfd5e1','center');});
+ rows.forEach((r,i)=>{const cy=centers[i];const t=team(r.id);
+  c.direction='ltr';txt(c,String(i+1),X(TB.posX),cy,FT.arLight,96,'#56637d',ar?'left':'right','middle');
+  const lg=img(logoMono(t));const ls=isTile(t,'mono')?100/TILE:100;if(lg)contain(c,lg,X(TB.logoX),cy,ls,ls);
+  if(ar){c.direction='rtl';txt(c,t?(t.ar||t.en):'?',TB.nameR,cy+4,FT.arMed,98,'#ffffff','right','middle',TB.nameR-1700);}
+  else{c.direction='ltr';txt(c,t?t.en.toUpperCase():'?',X(TB.nameR),cy+2,FT.arMed,80,'#ffffff','left','middle',TB.nameR-1700);}
+  const gd=(r.gf??0)-(r.ga??0);const vals=ar?[r.p,r.w,r.l,r.d,gd,r.pts]:[r.p,r.w,r.d,r.l,gd>0?'+'+gd:gd,r.pts];
+  c.direction='ltr';vals.forEach((v,k)=>txt(c,String(v??0),X(TB.cols[k]),cy+2,FT.arMed,98,'#ffffff','center','middle'));});
+ const rl=img(A.rsl);if(rl){const [x,y,w,h]=TB.rsl;contain(c,rl,x+w/2,y+h/2,w,h);}
+ c.direction='ltr';
+}
+
+/* ---- Fixtures / Results cards ---- */
+const GRAD=[[0,'#ffffff'],[0.5,'#ffffff'],[1,'#a3c1ff']];
+const nameCol=t=>(t&&t.nameColor)||(lum((t&&t.color)||'#444')>150?'#0d1d4a':'#ffffff');
+// Card specs measured from the PSDs (design pixels, relative to the card's top-left).
+const SPEC_DAY={fix:{city:384,citySize:42,time:464,timeSize:76,stad:516,stadEn:35,stadAr:36},w:647,boxH:325,r:48,crestCy:131.5,crest:209,nameBase:291,nameSize:33.4,cityBase:386,citySize:44,timeBase:482,timeSize:86,scoreBase:471,scoreSize:154,hx:162,ax:486,dash:[304,414,41,20]};
+const SPEC_MWF={w:699,boxH:350,r:42,crestCy:145,crest:216,nameBase:318,nameSize:41.4,cityBase:414,citySize:42.8,timeBase:479,timeSize:70};
+const SPEC_MWR={w:688,boxH:345,r:42,crestCy:141.5,crest:212,nameBase:313,nameSize:41.4,scoreBase:488,scoreSize:148.6,hx:167,ax:499,dash:[309,439,43,19]};
+function vgrad(c,y0,y1,a,b){const g=c.createLinearGradient(0,y0,0,y1);g.addColorStop(0,a);g.addColorStop(1,b);return g;}
+function drawCard(c,m,mode,S_,ar){
+ // Arabic: the home team sits on the right and the away team on the left.
+ const half=S_.w/2;const ht=team(m.home),at=team(m.away);const L=ar?at:ht,Rt=ar?ht:at;
+ rr(c,0,0,half+1,S_.boxH,[S_.r,0,0,S_.r]);c.fillStyle=(L&&L.color)||'#444';c.fill();
+ rr(c,half,0,half,S_.boxH,[0,S_.r,S_.r,0]);c.fillStyle=(Rt&&Rt.color)||'#444';c.fill();
+ const cs=t=>isTile(t,'logo')?S_.crest/TILE:S_.crest;
+ contain(c,img(logoColor(L)),half/2,S_.crestCy,cs(L),cs(L));
+ contain(c,img(logoColor(Rt)),half+half/2,S_.crestCy,cs(Rt),cs(Rt));
+ const nm=t=>ar?(t?(t.ar||t.en):'?'):(t?t.en:'?').toUpperCase();
+ c.direction=ar?'rtl':'ltr';
+ txt(c,nm(L),half/2,S_.nameBase,FT.card,S_.nameSize*(ar?1.12:1),nameCol(L),'center','alphabetic',half-26);
+ txt(c,nm(Rt),half+half/2,S_.nameBase,FT.card,S_.nameSize*(ar?1.12:1),nameCol(Rt),'center','alphabetic',half-26);
+ if(mode==='results'&&isPlayed(m)){c.direction='ltr';
+  const sz=S_.scoreSize,col=vgrad(c,S_.scoreBase-sz*0.7,S_.scoreBase,'#ffffff','#c9ccd3');
+  txt(c,String(ar?m.as:m.hs),S_.hx,S_.scoreBase,FT.score,sz,col,'center');
+  txt(c,String(ar?m.hs:m.as),S_.ax,S_.scoreBase,FT.score,sz,col,'center');
+  const [dx,dy,dw,dh]=S_.dash;rr(c,dx,dy,dw,dh,4);c.fillStyle='#e9ebef';c.fill();
+ }else if(S_.cityBase){
+  if(S_.fix){ // Day fixtures: city, kick-off time, then the stadium (Lama Sans, up to two lines)
+   const st=stadiumOf(m,ar),L=S_.fix;
+   txt(c,(ar?cityAr(m):cityOf(m))||' ',S_.w/2,L.city-(ar?4:0),FT.card,L.citySize,vgrad(c,L.city-L.citySize,L.city,'#ffffff','#c9ccd3'),'center','alphabetic',S_.w-40);
+   if(st){const size=ar?L.stadAr:L.stadEn,maxW=S_.w-40;c.direction=ar?'rtl':'ltr';setF(c,FT.arMed,size);
+    let lines=[st];if(c.measureText(st).width>maxW){const w=st.split(' ');let best=null;
+     for(let i=1;i<w.length;i++){const a=w.slice(0,i).join(' '),b=w.slice(i).join(' ');const m2=Math.max(c.measureText(a).width,c.measureText(b).width);if(!best||m2<best[0])best=[m2,a,b];}
+     if(best)lines=[best[1],best[2]];}
+    lines.forEach((ln,i)=>{const y=L.stad+i*size*1.18-(ar?4:0);const sz=txt(c,ln,S_.w/2,y,FT.arMed,size,'#b8bfcd','center','alphabetic',maxW);
+     c.lineWidth=sz*0.045;c.lineJoin='round';c.strokeStyle='#b8bfcd';c.strokeText(ln,S_.w/2,y);});}
+   c.direction='ltr';
+   txt(c,m.time||'TBC',S_.w/2,L.time,FT.num,L.timeSize,vgrad(c,L.time-L.timeSize*0.7,L.time,'#ffffff','#c9ccd3'),'center','alphabetic',S_.w-40);
+  }else{ // MW fixtures: city and kick-off time (as in the PSD)
+   txt(c,(ar?cityAr(m):cityOf(m))||' ',S_.w/2,S_.cityBase-(ar?8:0),FT.card,S_.citySize,vgrad(c,S_.cityBase-S_.citySize,S_.cityBase,'#ffffff','#c9ccd3'),'center','alphabetic',S_.w-40);
+   c.direction='ltr';
+   txt(c,m.time||'TBC',S_.w/2,S_.timeBase,FT.num,S_.timeSize,vgrad(c,S_.timeBase-S_.timeSize*0.7,S_.timeBase,'#ffffff','#c9ccd3'),'center','alphabetic',S_.w-40);
+  }
+ }else{c.direction='ltr';
+  txt(c,m.time||'TBC',S_.w/2,S_.scoreBase-20,FT.num,S_.scoreSize*0.55,'#ffffff','center','alphabetic',S_.w-40);
+ }
+ c.direction='ltr';
+}
+function header(c,photoKey,o,panel,titleL,titleR,base){
+ const W=3241;c.direction='ltr';c.fillStyle='#05080e';c.fillRect(0,0,W,4201);
+ cover(c,img(photoSrc(photoKey)),0,0,W,panel.photoH,o.photoY,o.photoZ,o.photoX);
+ const pn=img(panel.src);c.save();rr(c,0,panel.y,W,4201-panel.y+400,[panel.r,panel.r,0,0]);c.clip();
+ if(pn){if(o.lang==='ar'){c.translate(W,0);c.scale(-1,1);}c.drawImage(pn,0,panel.y,W,panel.h);}else{c.fillStyle='#0b0f17';c.fillRect(0,panel.y,W,4201);}c.restore();
+ const ar=o.lang==='ar';
+ const rl=img(A.rsl);if(rl){const [x,y,w,h]=panel.rsl;const cx=ar?W-x-w/2:x+w/2;contain(c,rl,cx,y+h/2,w,h);}
+ if(!ar){
+  setF(c,FT.title,135);const rw=c.measureText(titleR).width;
+  const ts=fitSize(c,FT.title,titleL,135,Math.max(400,2996-rw-120-606));
+  gradText(c,titleL,606,base,FT.title,ts,{stops:GRAD});
+  gradText(c,titleR,2996,base,FT.title,135,{align:'right',stops:GRAD});
+ }else{ // mirrored: main title on the right next to the RSL logo, the label on the left
+  const AS=128;c.direction='rtl';setF(c,FT.arTitle,AS);const rw=c.measureText(titleR).width;
+  const ts=fitSize(c,FT.arTitle,titleL,AS,Math.max(400,(W-606)-(W-2996)-rw-120));
+  gradText(c,titleL,W-606,base,FT.arTitle,ts,{align:'right',stops:GRAD});
+  gradText(c,titleR,W-2996,base,FT.arTitle,AS,{stops:GRAD});c.direction='ltr';
+ }
+}
+/* Match-day version (MATCHDAY psd, 3241 × 4201) */
+const CD={W:3241,H:4201,top:3395,gap:82};
+function dayMatches(o){return mwMatches(o.mw).filter(m=>m.date===o.day);}
+function drawDay(c,o,mode){
+ const key=mode==='fixtures'?'dayfix':'dayres';
+ const ar=o.lang==='ar';
+ header(c,key,o,{y:2977,r:200,h:1224,photoH:3100,src:A.panel,rsl:[202,2916,356,315]},
+  o.title||(ar?(mode==='fixtures'?`الجولة ${o.mw}`:'النتائج'):(mode==='fixtures'?`MW ${o.mw}`:'RESULTS')),
+  ar?(o.dayLabel||weekdayAr(o.day)||''):(o.dayLabel||weekday(o.day)||'').toUpperCase(),3163);
+ const ms=dayMatches(o);const n=ms.length;if(!n)return;const S_=SPEC_DAY;
+ // Adaptive: 4 matches = PSD size; 3 = +20%, 2 (or 1) = +30%; 5+ shrink to fit.
+ const full=4*S_.w+3*CD.gap,row=n*S_.w+(n-1)*CD.gap;
+ const k=n>4?full/row:({1:1.3,2:1.3,3:1.2,4:1})[n];
+ const total=row*k,x0=(CD.W-total)/2,top=Math.max(3290,CD.top-(510*k-510)/2);
+ ms.forEach((m,i)=>{const p=ar?n-1-i:i;c.save();c.translate(x0+p*(S_.w+CD.gap)*k,top);c.scale(k,k);
+  const BH=mode==='fixtures'?585:510;rr(c,0,0,S_.w,BH,S_.r);c.fillStyle='rgba(255,255,255,0.055)';c.fill();drawCard(c,m,mode,S_,ar);c.restore();});
+}
+/* Whole-matchweek version (FIXTURES & RESULTS psd, 3241 × 4201) */
+const MWP={y:1688,r:200,h:2573,photoH:1900,rsl:[200,1641,358,317]};
+function mmdd(ds){const d=new Date(ds+'T00:00:00');return isNaN(d)?'':`${d.getMonth()+1}/${d.getDate()}`;}
+function shortDay(ds){const d=new Date(ds+'T00:00:00');return isNaN(d)?'':d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();}
+function drawMW(c,o,mode){
+ const key=mode==='fixtures'?'mwfix':'mwres';const W=3241;
+ const ar=o.lang==='ar';
+ header(c,key,o,{...MWP,src:A.panelMW},o.title||(ar?(mode==='fixtures'?'المباريات':'النتائج'):(mode==='fixtures'?'FIXTURES':'RESULTS')),o.dayLabel||(ar?`الجولة ${o.mw}`:`MW ${o.mw}`),1889);
+ const ms=mwMatches(o.mw);if(!ms.length)return;
+ if(mode==='fixtures'){
+  const rows=[];const byDay={};ms.forEach(m=>{(byDay[m.date||'']=byDay[m.date||'']||[]).push(m);});
+  Object.keys(byDay).sort().forEach(d=>{const l=byDay[d];for(let i=0;i<l.length;i+=3)rows.push({date:d,first:i===0,ms:l.slice(i,i+3)});});
+  const k=Math.min(1,3/rows.length);const S_=SPEC_MWF;
+  rows.forEach((row,i)=>{c.save();c.translate(W/2,2100+i*625*k);c.scale(k,k);c.translate(-W/2,0);
+   rr(c,198,-53,2844,582,80);c.fillStyle='rgba(70,100,160,0.075)';c.fill();c.lineWidth=5;c.strokeStyle='rgba(120,150,215,0.12)';c.stroke();
+   if(row.first){if(!ar){gradText(c,shortDay(row.date),259,214.8,FT.title,100.8,{stops:GRAD});gradText(c,mmdd(row.date),259,301.2,FT.title,100.8,{stops:GRAD});}
+    else{const wd=weekdayAr(row.date),dd=ddmm(row.date);c.direction='rtl';const fs=fitSize(c,FT.arTitle,wd,86,330);gradText(c,wd,W-259,200,FT.arTitle,fs,{align:'right',stops:GRAD});c.direction='ltr';
+     const ds=fitSize(c,FT.arTitle,dd,92,330);gradText(c,dd,W-259,305,FT.arTitle,ds,{align:'right',stops:GRAD});}}
+   const n=row.ms.length,tot=n*S_.w+(n-1)*90.5,x0=(ar?W-1794:1794)-tot/2;
+   row.ms.forEach((m,j)=>{c.save();c.translate(x0+(ar?n-1-j:j)*789.5,0);drawCard(c,m,'fixtures',S_,ar);c.restore();});
+   c.restore();});
+ }else{
+  const S_=SPEC_MWR;const nRows=Math.ceil(ms.length/3);const k=Math.min(1,3/nRows);
+  for(let r=0;r<nRows;r++){const rowMs=ms.slice(r*3,r*3+3);c.save();c.translate(W/2,2101+r*600*k);c.scale(k,k);c.translate(-W/2,0);
+   const n=rowMs.length,tot=n*S_.w+(n-1)*207.5,x0=(ar?W-1625.5:1625.5)-tot/2;
+   rowMs.forEach((m,j)=>{c.save();c.translate(x0+(ar?n-1-j:j)*895.5,0);rr(c,0,0,S_.w,544,50);c.fillStyle='rgba(70,100,160,0.075)';c.fill();c.lineWidth=5;c.strokeStyle='rgba(120,150,215,0.12)';c.stroke();drawCard(c,m,'results',S_,ar);c.restore();});
+   c.restore();}
+ }
+}
+/* Full time (FULL TIME psd, 2160 × 2700) */
+// One name per player: the last name, keeping particles like "Al", "Bin", "De" ("Abdulrahman Al Safari" -> "AL SAFARI").
+// Initials like "Z." are dropped. Already-short names are left alone.
+const NAME_PARTICLES=new Set(['AL','EL','BIN','IBN','ABU','DE','DA','DI','DO','DOS','DAS','DEL','VAN','VON','LE','LA','MC','بن','ابن','أبو','ابو','آل','دي','دا','دو','فان']);
+function shortName(n){const w=String(n||'').replace(/\b[A-Z\u00C0-\u024F]\.\s*/gi,' ').replace(/(^|\s)[\u0621-\u064A]\.\s*/g,'$1 ').trim().split(/\s+/).filter(Boolean);if(w.length<2)return w.join(' ');
+ let i=w.length-1;while(i>0&&NAME_PARTICLES.has(w[i-1].toUpperCase()))i--;return w.slice(i).join(' ');}
+function parseScorers(txt,ar){return String(txt||'').split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+ const m=l.match(/^(.*?)[\s,]+(\d+(?:\s*\+\s*\d+)?)\s*['’]?\s*(\(.*\))?\s*$/);
+ if(!m)return{name:shortName(l).toUpperCase(),min:''};let x=m[3]?m[3].toUpperCase():'';if(ar&&/^\((P|PEN)\)$/.test(x))x='(ج)';return{name:shortName(m[1].replace(/[,\s]+$/,'')).toUpperCase(),min:(ar&&x?'\u200E'+x+'\u200E ':'')+m[2].replace(/\s+/g,'')+'’'+(!ar&&x?'\u200E '+x+'\u200E':'')};});}
+function ftMatch(o){const ms=mwMatches(o.mw);return ms.find(m=>m.id===o.ftMatch)||[...ms].reverse().find(isPlayed)||ms[0];}
+// Score box. dy = how far the box grows upwards for long scorer lists.
+// <=0: the PSD's box (lower when there are few goals). Up to 223: the designer's extended box (6-goal version), positioned by dy.
+// Beyond that: the extended box with a plain band of its own texture repeated in the middle.
+function drawFTBox(c,dy){
+ if(dy<=0){const bx=img(A.ftBox);if(bx)c.drawImage(bx,145,1954-dy,1880,1085);return;}
+ const t=img(A.ftBoxTall);if(!t)return;const k=t.naturalWidth/1960;const X=100,TOP=1700; // asset covers x 100..2060, y 1700..2700 when the box top is at 1868
+ if(dy<=223){c.drawImage(t,X,TOP+223-dy,1960,1000);return;}
+ const extra=dy-223,cut=500;      // rows above `cut` (box top area) move up by `extra`
+ c.drawImage(t,0,cut*k,t.naturalWidth,(1000-cut)*k,X,TOP+cut,1960,1000-cut);
+ c.drawImage(t,0,0,t.naturalWidth,cut*k,X,TOP-extra,1960,cut);
+ const band=100,b0=560;            // plain rows of the box, repeated to fill the gap
+ for(let y=TOP+cut-extra;y<TOP+cut;y+=band){const h=Math.min(band,TOP+cut-y);c.drawImage(t,0,b0*k,t.naturalWidth,h*k,X,y,1960,h);}
+}
+function drawFT(c,o){
+ const ar=o.lang==='ar';
+ c.direction='ltr';c.fillStyle='#05080e';c.fillRect(0,0,2160,2700);
+ cover(c,img(photoSrc('ft')),0,0,2160,2700,o.photoY,o.photoZ,o.photoX);
+ const m=ftMatch(o);
+ const sc=f=>m?parseScorers(ar?(m[f+'Ar']||m[f]):m[f],ar):[];
+ const H=sc('homeScorers'),Aw=sc('awayScorers');
+ const Ls=ar?Aw:H,Rs=ar?H:Aw;const n=Math.max(H.length,Aw.length); // Arabic: home team on the right
+ // Scorer lines: 5% smaller than the PSD; when they don't fit, the whole box grows upwards instead of shrinking the text.
+ const sz=43.4,pitch=67.5,first=2439,GAP=140; // the same gap below the last scorer whatever the number of goals
+ const dy=Math.round(first+(Math.max(n,1)-1)*pitch-(2700-GAP)); // >0: box grows upwards, <0: box sits lower (few goals)
+ c.save();if(ar){c.translate(2160,0);c.scale(-1,1);}drawFTBox(c,dy);c.restore(); // Arabic: the box art is mirrored too
+ c.save();c.translate(0,-dy);
+ if(m){const ht=team(m.home),at=team(m.away);const L=ar?at:ht,Rt=ar?ht:at;
+  rr(c,327,2091,231,202,[63,0,45,0]);c.fillStyle=(L&&L.color)||'#444';c.fill();
+  rr(c,1602,2091,231,202,[0,63,0,45]);c.fillStyle=(Rt&&Rt.color)||'#444';c.fill();
+  const cs=t=>isTile(t,'logo')?139/TILE:139;
+  contain(c,img(logoColor(L)),443,2191.5,cs(L),cs(L));contain(c,img(logoColor(Rt)),1717,2191.5,cs(Rt),cs(Rt));}
+ const rl=img(A.rsl);if(rl)contain(c,rl,1080.5,2192,357,316);
+ if(m&&isPlayed(m)){txt(c,String(ar?m.as:m.hs),726,2281,FT.num,290,'#ffffff','center');txt(c,String(ar?m.hs:m.as),1434,2281,FT.num,290,'#ffffff','center');}
+ const gap=34*sz/45.7;setF(c,FT.bold,sz);
+ const nf=g=>hasAr(g.name)?FT.boldAr:FT.bold,nz=g=>hasAr(g.name)?sz*0.92:sz;
+ // minutes form a centred column next to the middle; names sit outside them
+ const lw=Math.max(0,...Ls.map(g=>c.measureText('\u2066'+g.min+'\u2069').width)),rw=Math.max(0,...Rs.map(g=>c.measureText('\u2066'+g.min+'\u2069').width));
+ const HX=965,AX=1195,EDGE=60; // inner edges of the two scorer blocks, and the margin kept from the box sides
+ const name=(g,x,y,al,maxW)=>{c.direction=hasAr(g.name)?'rtl':'ltr';txt(c,g.name,x,y,nf(g),nz(g),'#ffffff',al,'alphabetic',maxW);c.direction='ltr';};
+ Ls.forEach((g,i)=>{const y=first+i*pitch;const nx=HX-lw-gap;
+  txt(c,'\u2066'+g.min+'\u2069',HX-lw/2,y,FT.bold,sz,'#ffffff','center');name(g,nx,y,'right',nx-(327+EDGE));});
+ Rs.forEach((g,i)=>{const y=first+i*pitch;const nx=AX+rw+gap;
+  txt(c,'\u2066'+g.min+'\u2069',AX+rw/2,y,FT.bold,sz,'#ffffff','center');name(g,nx,y,'left',(1833-EDGE)-nx);});
+ c.restore();
+}
+/* ---- Short table: top 4 / bottom 4 (TOP4 psd, 2160 x 2700). Arabic is the PSD layout; English is its mirror. ---- */
+const T4={W:2160,H:2700,panelY:1890,cols:[1017,856,688,531,356,191],hdrY:2034,base:[2178.6,2322.4,2449.4,2572.3],posX:1980,logoX:1854,nameR:1776};
+function drawShort(c,o,bottom){
+ const {W,H}=T4,ar=o.lang==='ar',X=v=>ar?v:W-v;c.direction='ltr';
+ c.fillStyle='#05080e';c.fillRect(0,0,W,H);
+ cover(c,img(photoSrc(o.tpl)),0,0,W,H,o.photoY,o.photoZ,o.photoX);
+ const pn=img(A.panelT4);c.save();rr(c,0,T4.panelY,W,H-T4.panelY+300,[143,143,0,0]);c.clip();
+ if(pn){if(!ar){c.translate(W,0);c.scale(-1,1);}c.drawImage(pn,0,T4.panelY,W,810);}else{c.fillStyle='#0b0f17';c.fillRect(0,T4.panelY,W,H);}c.restore();
+ const rl=img(A.rsl);if(rl)contain(c,rl,X(1934.5),1948.5,209,185);
+ const T=tableRows(o);const all=T.rows.slice(0,18);const start=bottom?Math.max(0,all.length-4):0;const rows=all.slice(start,start+4);
+ // title
+ const title=o.title||(ar?`الجولة ${T.mw}`:`MW ${T.mw}`);
+ if(ar){c.direction='rtl';gradText(c,title,1795,1987,FT.arTitle,82,{align:'right',stops:[[0,'#b9c9f2'],[0.55,'#ffffff'],[1,'#ffffff']]});c.direction='ltr';}
+ else gradText(c,title,W-1795,1987,FT.title,86,{stops:GRAD});
+ // column headers
+ const hdr=ar?['لعب','فاز','خسر','تعادل','+/-','نقاط']:['P','W','D','L','GD','PTS'];
+ hdr.forEach((l,i)=>{c.direction=(ar&&l!=='+/-')?'rtl':'ltr';txt(c,l,X(T4.cols[i]),T4.hdrY,FT.arLight,ar?51.5:46,'#cfd5e1','center');});
+ // divider lines (the same positions as the full table, when they fall inside these four rows)
+ (S.settings.separators||[]).forEach(p=>{const i=p-start-1;if(i<0||i>2)return;const y=(T4.base[i]+T4.base[i+1])/2-36;c.fillStyle='rgba(95,125,190,0.45)';c.fillRect(140,y-1.5,W-280,3);});
+ rows.forEach((r,i)=>{const y=T4.base[i],t=team(r.id);
+  c.direction='ltr';txt(c,String(start+i+1),X(T4.posX),y,FT.arMed,72,'#56637d','center');
+  const lg=img(logoMono(t));const ls=isTile(t,'mono')?78/TILE:78;if(lg)contain(c,lg,X(T4.logoX),y-26,ls,ls);
+  if(ar){c.direction='rtl';txt(c,t?(t.ar||t.en):'?',T4.nameR,y-11,FT.arMed,72,'#ffffff','right','alphabetic',T4.nameR-1150);}
+  else{c.direction='ltr';txt(c,t?t.en.toUpperCase():'?',X(T4.nameR),y-12,FT.arMed,60,'#ffffff','left','alphabetic',T4.nameR-1150);}
+  const gd=(r.gf??0)-(r.ga??0);const vals=ar?[r.p,r.w,r.l,r.d,gd,r.pts]:[r.p,r.w,r.d,r.l,gd>0?'+'+gd:gd,r.pts];
+  c.direction='ltr';vals.forEach((v,k)=>txt(c,String(v??0),X(T4.cols[k]),y,FT.arMed,72,'#ffffff','center'));});
+ c.direction='ltr';
+}
+/* ---- Top goalscorers (goalscorers psd, 3168 x 3960; English layout, Arabic is the mirror) ---- */
+function scorersList(){return (S.scorers&&Array.isArray(S.scorers.list))?S.scorers.list:[];}
+function drawGS(c,o){
+ const W=3168,H=3960,ar=o.lang==='ar',X=v=>ar?W-v:v,N=Math.max(2,Math.min(5,+o.gsN||5));c.direction='ltr';
+ c.fillStyle='#05080e';c.fillRect(0,0,W,H);
+ const TOP=420,AREA=3430,pitch=AREA/N,rowTop=i=>TOP+i*pitch,rowBot=i=>i===N-1?H:TOP+(i+1)*pitch;
+ const PW=2000; // photo area (under the panel's soft left edge)
+ if(!o.gsSplit)cover(c,img(photoSrc('gs')),ar?W-PW-200:0,0,PW+200,H,o.photoY,o.photoZ,o.photoX);
+ else for(let i=0;i<N;i++){const y0=i===0?0:rowTop(i)+3,y1=rowBot(i)-3;cover(c,img(photoSrc('gs'+(i+1))),ar?W-PW-200:0,y0,PW+200,y1-y0,o.photoY,o.photoZ,o.photoX);}
+ const pn=img(A.panelGS);if(pn){c.save();if(ar){c.translate(W,0);c.scale(-1,1);}c.drawImage(pn,1736,0,1432,H);c.restore();}
+ const rl=img(A.rsl);if(rl)contain(c,rl,X(2173),214,285,252);
+ // title
+ // title: split into two balanced lines; shrinks to fit when it's long
+ const tw=(o.title||(ar?'ترتيب الهدافين':'TOP GOAL SCORERS')).trim().split(/\s+/);let t1=tw.join(' '),t2='';if(tw.length>1){setF(c,ar?FT.arTitle:FT.title,96);let best=1e9; // split into two lines of similar width
+  for(let j=1;j<tw.length;j++){const a1=tw.slice(0,j).join(' '),a2=tw.slice(j).join(' ');const m=Math.max(c.measureText(ar?a1:a1.toUpperCase()).width,c.measureText(ar?a2:a2.toUpperCase()).width);if(m<best-1){best=m;t1=a1;t2=a2;}}}
+ const TMAX=W-70-2392;
+ if(ar){c.direction='rtl';const ts=Math.min(fitSize(c,FT.arTitle,t1,96,TMAX),t2?fitSize(c,FT.arTitle,t2,96,TMAX):96);
+  if(t2){gradText(c,t1,X(2392),205,FT.arTitle,ts,{align:'right',stops:GRAD});gradText(c,t2,X(2392),205+ts*1.18,FT.arTitle,ts,{align:'right',stops:GRAD});}
+  else gradText(c,t1,X(2392),262,FT.arTitle,ts,{align:'right',stops:GRAD});c.direction='ltr';}
+ else{const T1=t1.toUpperCase(),T2=t2.toUpperCase();c.save();c.translate(2392,0);c.scale(1.066,1);
+  const ts=Math.min(fitSize(c,FT.title,T1,96.4,TMAX/1.066),T2?fitSize(c,FT.title,T2,96.4,TMAX/1.066):96.4);
+  if(T2){gradText(c,T1,0,205,FT.title,ts,{stops:GRAD});gradText(c,T2,0,205+ts*0.985,FT.title,ts,{stops:GRAD});}else gradText(c,T1,0,255,FT.title,ts,{stops:GRAD});c.restore();}
+ const L=scorersList().slice(0,N);
+ const k=Math.min(1.3,pitch/686);
+ for(let i=0;i<N;i++){
+  if(i>0){c.fillStyle='rgba(130,160,220,0.30)';c.fillRect(ar?0:1971,rowTop(i)-2,W-1971,4);}
+  const g=L[i];if(!g)continue;const t=team(g.team);
+  const top=rowTop(i),bot=Math.min(rowBot(i),H-20);const nm=((o.gsNames||{})[o.lang]||[])[i]||(ar?(g.ar||g.en):g.en)||'';
+  c.save();c.translate(X(1971),top);c.scale(ar?-k:k,k); // club tile at the top of the row, flush with the panel edge
+  rr(c,0,10,234,178,[0,30,30,0]);c.fillStyle=(t&&t.color)||'#444';c.fill();
+  c.save();if(ar){c.scale(-1,1);}const cs=isTile(t,'logo')?130/TILE:130;contain(c,img(logoColor(t)),ar?-117:117,99,cs,cs);c.restore();
+  c.restore();
+  const nx=X(1971+287*k),maxW=(W-60)-(1971+287*k);
+  if(ar){c.direction='rtl';txt(c,nm,nx,top+131*k,FT.boldAr,98*k,'#ffffff','right','alphabetic',maxW);c.direction='ltr';}
+  else{c.save();try{c.letterSpacing=(-0.025*106.6*k).toFixed(1)+'px';}catch(e){}txt(c,nm.toUpperCase(),nx,top+131*k,FT.bold,106.6*k,'#ffffff','left','alphabetic',maxW);c.restore();}
+  const NS=492*Math.min(k,1.05),capH=NS*0.72; // number size stays close to Top 5, right under the name
+  const by0=top+188*k+40+capH,cx=X(2608),by=N<5?by0+Math.max(0,(bot-60)-by0)*0.4:by0; // fewer players: move it part of the way into the spare room
+  c.save();c.translate(cx,by);c.scale(1.066,1);const gr=c.createLinearGradient(-200*k,0,200*k,-380*k);gr.addColorStop(0,'#ffffff');gr.addColorStop(0.45,'#f6f8fd');gr.addColorStop(1,'#d6e4ff');
+  txt(c,String(g.goals??''),0,0,FT.score,NS,gr,'center','alphabetic',2*(W-60-2608)/1.066);c.restore();
+ }
+}
+/* ---- Achievement (Q psd, 1080 x 1350): box at the bottom, or box at the top with the player cut-out in front ---- */
+// Draw the top box art as a nine-slice so it can take any width and height (corners and shadow stay crisp)
+function nineSlice(c,im,sx0,sy0,sx1,sy1,C,dx0,dy0,dx1,dy1){const k=im.naturalWidth/1080;const S=(a)=>a*k;
+ const xs=[sx0,sx0+C,sx1-C,sx1],ys=[sy0,sy0+C,sy1-C,sy1],xd=[dx0,dx0+C,dx1-C,dx1],yd=[dy0,dy0+C,dy1-C,dy1];
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++){const w=xd[i+1]-xd[i],h=yd[j+1]-yd[j];if(w>0&&h>0)c.drawImage(im,S(xs[i]),S(ys[j]),S(xs[i+1]-xs[i]),S(ys[j+1]-ys[j]),xd[i],yd[j],w,h);}}
+function drawAch(c,o,top){
+ const W=1080,H=1350,ar=o.lang==='ar',T=O.ach[ar?'ar':'en']||{};c.direction='ltr';
+ c.fillStyle='#05080e';c.fillRect(0,0,W,H);
+ cover(c,img(photoSrc(top?'achB':'achA')),0,0,W,H,o.photoY,o.photoZ,o.photoX);
+ const L=top?{ts:71.4,ss:53.5,gap:76,mw:860}:{lx:540.5,ly:1021,lw:137,lh:122,t:1168.6,ts:83.3,s:1261.6,ss:62.5,gap:78,mw:900};
+ const tf=ar?FT.arTitle:FT.title,tsz=ar?L.ts:L.ts*0.92,ssz=ar?L.ss:L.ss*0.85;
+ // lines: Enter starts a new line; a long single line wraps into two; each line shrinks only if it still doesn't fit
+ const prep=(t,f,size,sx)=>{t=String(t||'');if(!ar)t=t.toUpperCase();let ls=t.split(/\n/).map(x=>x.trim()).filter(Boolean);if(!ls.length)return[];
+  c.direction=ar?'rtl':'ltr';setF(c,f,size);
+  if(ls.length===1&&c.measureText(ls[0]).width*sx>L.mw*1.15){const w=ls[0].split(/\s+/);if(w.length>1){let best=1e9,b=null;for(let j=1;j<w.length;j++){const a1=w.slice(0,j).join(' '),a2=w.slice(j).join(' ');const m=Math.max(c.measureText(a1).width,c.measureText(a2).width);if(m<best){best=m;b=[a1,a2];}}ls=b;}}
+  return ls.slice(0,3);};
+ const TL=prep(T.t,tf,tsz,1),SL=prep(T.s,FT.arMed,ssz,1.12);
+ const tp=tsz*1.14,sp=ssz*1.32,E=Math.max(0,TL.length-1)*tp+Math.max(0,SL.length-1)*sp; // extra height for lines beyond two
+ const tg=[[0,'#ffffff'],[0.55,'#ffffff'],[1,'#b9cdf5']];
+ const drawText=(y0)=>{let y=y0;TL.forEach((ln,i)=>{c.direction=ar?'rtl':'ltr';const sz=fitSize(c,tf,ln,tsz,L.mw);gradText(c,ln,540,y,tf,sz,{align:'center',stops:tg});if(i<TL.length-1)y+=tp;});
+  if(TL.length)y+=L.gap;SL.forEach((ln,i)=>{c.save();c.translate(540,y);c.scale(1.12,1);c.direction=ar?'rtl':'ltr';txt(c,ln,0,0,FT.arMed,ssz,'#ffffff','center','alphabetic',L.mw/1.12);c.restore();if(i<SL.length-1)y+=sp;});c.direction='ltr';return y;};
+ const bx=img(top?A.boxAchB:A.boxAchA),rl=img(A.rsl);
+ if(!top){ // box A: full width, grows upwards from the bottom
+  if(bx){const k=bx.naturalWidth/W;c.drawImage(bx,0,0,bx.naturalWidth,1100*k,0,-E,W,1100);c.drawImage(bx,0,1100*k,bx.naturalWidth,100*k,0,1100-E,W,100+E);c.drawImage(bx,0,1200*k,bx.naturalWidth,150*k,0,1200,W,150);}
+  if(rl)contain(c,rl,L.lx,L.ly-E,L.lw,L.lh);
+  const lastGap=(SL.length?0:0);drawText(L.t-E+(TL.length&&SL.length?93-L.gap:0)/1);
+ }else{ // box B: fits its text (width and height); size and position can be adjusted
+  c.direction='ltr';let tw=0;TL.forEach(ln=>{c.direction=ar?'rtl':'ltr';const sz=fitSize(c,tf,ln,tsz,L.mw);setF(c,tf,sz);tw=Math.max(tw,c.measureText(ln).width);});
+  SL.forEach(ln=>{c.direction=ar?'rtl':'ltr';const sz=fitSize(c,FT.arMed,ln,ssz,L.mw/1.12);setF(c,FT.arMed,sz);tw=Math.max(tw,c.measureText(ln).width*1.12);});c.direction='ltr';
+  const bw=Math.max(520,Math.min(1000,tw+190)),contentH=(TL.length?tp*(TL.length-1):0)+(TL.length&&SL.length?L.gap:0)+(SL.length?sp*(SL.length-1):0);
+  const bh=140+contentH+(SL.length?72:62),s=(o.achBoxS||100)/100,top0=84+(o.achBoxY||0);
+  c.save();c.translate(540,top0);c.scale(s,s);c.translate(-540,0); // local: box top at y=0
+  // soft shadow drawn here (not stretched from the art), then the box itself from the opaque part of the art
+  c.save();c.shadowColor='rgba(0,0,0,0.55)';c.shadowBlur=70;c.shadowOffsetY=18;rr(c,540-bw/2+14,14,bw-28,bh-28,44);c.fillStyle='#0b0f17';c.fill();c.restore(); // shadow source sits fully inside the box, so no dark ring shows at the edges
+  if(bx){c.save();rr(c,540-bw/2,0,bw,bh,58);c.clip();nineSlice(c,bx,150,94,928,385,80,540-bw/2,0,540+bw/2,bh);c.restore();}
+  if(rl)contain(c,rl,539,2,116,103);
+  drawText(140);c.restore();
+  const cs=cutSrc(),p=cs&&img(cs);if(p)cover(c,p,0,0,W,H,o.photoY,o.photoZ,o.photoX); // the player in front of the box
+ }
+}
+// The cut-out only shows when it belongs to the current background photo
+function cutSrc(){if(PHOTO_MEM.achP===false)return null;if(PHOTO_MEM.achP)return PHOTO_MEM.achP;if(PHOTO_MEM.achB)return null;return A.photo.achP;}
+// Automatic player cut-out (background removal runs in the browser; the model loads from the web the first time)
+let BGRM=null;
+async function autoCutout(src){
+ if(!BGRM)BGRM=import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+ const m=await BGRM;const input=await (await fetch(new URL(src,location.href).href)).blob(); // give the tool the image itself, not a relative path
+ const blob=await m.removeBackground(input,{model:'isnet_quint8',output:{format:'image/png',quality:0.9},progress:(key,cur,tot)=>{if(/fetch/.test(key)&&tot)setCutStatus(`Loading the cut-out tool… ${Math.round(cur/tot*100)}%`);else if(/compute/.test(key))setCutStatus('Cutting out the player…');}});
+ return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob);});}
+function setCutStatus(t){const el=$('#o-ach-status');if(el)el.textContent=t||'';if(t)toast(t);}
+async function runCutout(){const src=photoSrc('achB');PHOTO_MEM.achP=false;renderStudio();setCutStatus('Cutting out the player… (the first time takes a little longer)');$('#o-ach-auto').disabled=true;
+ try{const d=await autoCutout(src);PHOTO_MEM.achP=d;setCutStatus('Player cut out.');renderStudio();}
+ catch(e){console.warn(e);setCutStatus(SITE?'The automatic cut-out failed for this photo ('+String(e&&e.message||e).slice(0,80)+'). Try again, or upload a cut-out PNG.':'The automatic cut-out only works on the website (rsl-gfx.github.io). Here, upload a cut-out PNG.');}
+ finally{$('#o-ach-auto').disabled=false;}}
+/* ---- Player comparison (cmp psd, 2112 x 2640). Rows can be added/removed: the box grows upwards. Arabic is the mirror. ---- */
+function drawCmp(c,o){
+ const W=2112,H=2640,ar=o.lang==='ar',X=v=>ar?W-v:v,C=O.cmp,N=Math.max(1,C.rows.length),PITCH=158.2,sh=(N-3)*PITCH;c.direction='ltr';
+ c.fillStyle='#05080e';c.fillRect(0,0,W,H);
+ // photos: player 1 on the left (on the right in Arabic)
+ [['cmp1',0],['cmp2',1]].forEach(([k,j])=>{const x=(ar?1-j:j)*1056;cover(c,img(photoSrc(k)),x,0,1056,H,o.photoY,o.photoZ,o.photoX);});
+ const top=1930-sh;
+ c.save();c.shadowColor='rgba(0,0,0,0.55)';c.shadowBlur=60;c.shadowOffsetY=-10;rr(c,133,top,1844,H-top+200,[40,40,0,0]);c.fillStyle='#0b0f17';c.fill();c.restore();
+ const pn=img(A.panelCmp);c.save();rr(c,133,top,1844,H-top+200,[40,40,0,0]);c.clip();if(pn){if(ar){c.translate(W,0);c.scale(-1,1);}c.drawImage(pn,133,0,1844,H);}c.restore();
+ // club tiles + names
+ C.p.forEach((pl,j)=>{const t=team(pl.team),left=(ar?1-j:j)===0;const tx=left?133:1815;
+  rr(c,tx,top,163,153,left?[40,0,40,0]:[0,40,0,40]);c.fillStyle=(t&&t.color)||'#444';c.fill();
+  const cs=isTile(t,'logo')?96/TILE:96;contain(c,img(logoColor(t)),tx+81.5,top+76.5,cs,cs);
+  const cx=left?576:1547,nm=ar?(pl.ar||pl.en||''):(pl.en||'').toUpperCase();
+  if(ar){c.direction='rtl';txt(c,nm,cx,top+104,FT.arTitle,64,'#ffffff','center','alphabetic',540);c.direction='ltr';}
+  else{c.save();try{c.letterSpacing='-3.3px';}catch(e){}txt(c,nm,cx,top+104,FT.title,65.5,'#ffffff','center','alphabetic',560);c.restore();}});
+ const rl=img(A.rsl);if(rl)contain(c,rl,1055.5,top+50,199,176);
+ // rows
+ C.rows.forEach((r,i)=>{const by=2234.6-sh+i*PITCH;
+  if(i>0){const ly=by-PITCH+24;c.fillStyle='rgba(60,72,98,0.9)';c.fillRect(419,ly,1273,8);}
+  c.save();try{c.letterSpacing='-6.4px';}catch(e){}
+  const ng=vgrad(c,by-95,by,'#ffffff','#cfdaf3');txt(c,String((ar?r.r:r.l)??''),571.3,by,FT.num,128,ng,'center','alphabetic',300);txt(c,String((ar?r.l:r.r)??''),1541.8,by,FT.num,128,ng,'center','alphabetic',300);c.restore();
+  const lb=ar?(r.ar||r.en||''):(r.en||'').toUpperCase();
+  if(ar){c.direction='rtl';txt(c,lb,1056,by-36,FT.arMed,62,'#eef0f4','center','alphabetic',600);c.direction='ltr';}
+  else{c.save();c.translate(1056,by-34);c.scale(0.7,1);txt(c,lb,0,0,{fam:'"LamaSans-Regular","LamaSans-Medium",sans-serif',w:400,st:'normal'},80,'#eef0f4','center','alphabetic',600/0.7);c.restore();}});
+}
+/* ---- Highlights thumbnail (thumbnail psd, 3840 x 2160, English only) ---- */
+function drawThumb(c,o){
+ const W=3840,H=2160;c.direction='ltr';c.fillStyle='#05080e';c.fillRect(0,0,W,H);
+ cover(c,img(photoSrc('thumb')),0,0,W,H,o.photoY,o.photoZ,o.photoX);
+ const pn=img(A.panelThumb);c.save();rr(c,-200,0,1335+200,H,[0,150,150,0]);c.clip();if(pn)c.drawImage(pn,0,0,1335,H);else{c.fillStyle='#0b0f17';c.fillRect(0,0,1335,H);}c.restore();
+ const rl=img(A.rsl);if(rl)contain(c,rl,191.5,172.5,213,189);
+ const title=(o.title||'HIGHLIGHTS').toUpperCase();
+ c.save();c.translate(340,216.5);c.scale(1.066,1);const ts=fitSize(c,FT.title,title,109.7,(1290-340)/1.066);gradText(c,title,0,0,FT.title,ts,{stops:[[0,'#fafafa'],[1,'#eff0f2']]});c.restore();
+ const m=ftMatch(o);if(!m)return;const ht=team(m.home),at=team(m.away);
+ [[ht,502,m.hs],[at,1209,m.as]].forEach(([t,y,sc])=>{
+  rr(c,85,y,425,421,46);c.fillStyle=(t&&t.color)||'#444';c.fill();
+  const cs=isTile(t,'logo')?322/TILE:322;contain(c,img(logoColor(t)),297.5,y+210.5,cs,cs);
+  if(isPlayed(m)){c.save();c.translate(921,y+471);c.scale(1.066,1);
+   const g=c.createLinearGradient(-240,0,240,-520);g.addColorStop(0,'#ffffff');g.addColorStop(0.45,'#f6f8fd');g.addColorStop(1,'#d6e4ff'); // white bottom-left to pale blue top-right, as in the PSD
+   txt(c,String(sc),0,0,FT.num,708,g,'center','alphabetic',760/1.066);c.restore();}});
+}
+const TEMPLATES={
+ table:{name:'Table',desc:'League table',W:TB.W,H:TB.H,draw:drawTable,table:true},
+ mwfix:{name:'Fixtures',desc:'Matchweek or day',W:3241,H:4201,draw:(c,o)=>drawMW(c,o,'fixtures'),fix:true,mw:true},
+ mwres:{name:'Results',desc:'Matchweek or day',W:3241,H:4201,draw:(c,o)=>drawMW(c,o,'results'),mw:true},
+ dayfix:{hidden:true,name:'Day fixtures',desc:'One match day',W:CD.W,H:CD.H,draw:(c,o)=>drawDay(c,o,'fixtures'),fix:true,day:true},
+ dayres:{hidden:true,name:'Day results',desc:'One match day',W:CD.W,H:CD.H,draw:(c,o)=>drawDay(c,o,'results'),day:true},
+ ft:{name:'Full time',desc:'Post or thumbnail',W:2160,H:2700,draw:drawFT},
+ achA:{name:'Achievement',desc:'Standout moments',W:1080,H:1350,draw:(c,o)=>drawAch(c,o,false)},
+ achB:{hidden:true,name:'Achievement',desc:'Player in front',W:1080,H:1350,draw:(c,o)=>drawAch(c,o,true)},
+ cmp:{name:'Comparison',desc:'Two players',W:2112,H:2640,draw:drawCmp},
+ gs:{name:'Top scorers',desc:'Goalscorers',W:3168,H:3960,draw:drawGS},
+ thumb:{hidden:true,name:'Thumbnail',desc:'Highlights',W:3840,H:2160,draw:drawThumb,enOnly:true},
+ top4:{name:'Top 4',desc:'Short table',W:2160,H:2700,draw:(c,o)=>drawShort(c,o,false),hidden:true,table:true},
+ bot4:{name:'Bottom 4',desc:'Short table',W:2160,H:2700,draw:(c,o)=>drawShort(c,o,true),hidden:true,table:true}
+};
+const TABLE_GROUP=['table','top4','bot4'];
+// Template tiles that hold several layouts; the "Layout" option switches between them.
+const GROUPS=[{tile:'table',label:'Table size',items:[['table','Full table (18 clubs)'],['top4','Top 4'],['bot4','Bottom 4']]},
+ {tile:'mwfix',label:'Layout',items:[['mwfix','Whole matchweek'],['dayfix','One match day']]},
+ {tile:'mwres',label:'Layout',items:[['mwres','Whole matchweek'],['dayres','One match day']]},
+ {tile:'achA',label:'Layout',items:[['achA','Box at the bottom'],['achB','Box at the top · player in front']]},
+ {tile:'ft',label:'Format',items:[['ft','Full time post'],['thumb','Highlights thumbnail']]}];
+const groupOf=k=>GROUPS.find(g=>g.items.some(i=>i[0]===k));
+function drawTo(canvas,o,scale){const T=TEMPLATES[o.tpl];const k=scale||(1080/T.W);canvas.width=Math.round(T.W*k);canvas.height=Math.round(T.H*k);
+ const c=canvas.getContext('2d');c.setTransform(k,0,0,k,0,0);c.imageSmoothingQuality='high';T.draw(c,o);c.setTransform(1,0,0,1,0,0);}
+
+/* ============ studio UI ============ */
+const O={achBoxS:100,achBoxY:0,ach:{en:{t:'Best goals',s:'Sadio Mané'},ar:{t:'أجمل اهداف',s:'ساديو ماني'}},cmp:{p:[{team:'hil',en:'Neves',ar:'نيفيز'},{team:'sha',en:'Carrasco',ar:'كاراسكو'}],
+ rows:[{en:'Games',ar:'المباريات',l:'12',r:'9'},{en:'Goals',ar:'الأهداف',l:'2',r:'6'},{en:'Assists',ar:'صناعة الأهداف',l:'7',r:'4'}]},gsNames:{en:[],ar:[]},gsN:5,gsSplit:false,lang:'en',tpl:'mwfix',ftMatch:'',mw:'auto',day:'auto',title:'',dayLabel:'',src:'official',size:'1',photoY:30,photoZ:100,photoX:50};
+function resolvedMw(){if(O.mw!=='auto')return +O.mw;if(TEMPLATES[O.tpl].fix)return nextMw();if(TABLE_GROUP.includes(O.tpl)&&S.official&&S.official.mw)return S.official.mw;return lastPlayedMw();}
+function resolvedDay(mw){const days=mwDays(mw);if(O.day!=='auto'&&days.includes(O.day))return O.day;const ms=mwMatches(mw);
+ if(TEMPLATES[O.tpl].fix){const u=ms.find(m=>!isPlayed(m));return u?u.date:days[0];}
+ const p=ms.filter(isPlayed);return p.length?p[p.length-1].date:days[0];}
+function opts(){const mw=resolvedMw();return{...O,achBoxS:O.achBoxS,achBoxY:O.achBoxY,rawMw:O.mw,mw,day:resolvedDay(mw),photoY:O.photoY/100,photoZ:O.photoZ/100,photoX:O.photoX/100};}
+let drawQueued=false;function scheduleDraw(){if(drawQueued)return;drawQueued=true;requestAnimationFrame(()=>{drawQueued=false;drawPreview();});}
+function drawPreview(){drawTo($('#cv'),opts());}
+function renderStudio(){
+ $('#tpls').innerHTML=Object.entries(TEMPLATES).filter(([k,v])=>!v.hidden).map(([k,v])=>`<button class="tpl ${k===O.tpl||(groupOf(O.tpl)&&groupOf(O.tpl).tile===k)?'on':''}" data-tpl="${k}"><b>${esc(v.name)}</b><span>${esc(v.desc)}</span></button>`).join('');
+ const isT=O.tpl==='table',isTG=TABLE_GROUP.includes(O.tpl),isThumb=O.tpl==='thumb';if(TEMPLATES[O.tpl].enOnly)O.lang='en';const mw=resolvedMw();
+ $('#o-mw').innerHTML=`<option value="auto">Automatic (MW ${mw})</option>`+mwList().map(m=>`<option value="${m}" ${String(m)===String(O.mw)?'selected':''}>Matchweek ${m}</option>`).join('');
+ const days=mwDays(mw);const rd=resolvedDay(mw);
+ $('#o-day').innerHTML=`<option value="auto">Automatic (${esc(weekday(rd))} ${esc(rd||'')})</option>`+days.map(d=>{const n=mwMatches(mw).filter(m=>m.date===d).length;return `<option value="${d}" ${d===O.day?'selected':''}>${weekday(d)} ${d} · ${n} match${n>1?'es':''}</option>`}).join('');
+ const isDay=!!TEMPLATES[O.tpl].day;$('#o-day-wrap').style.display=isDay?'':'none';$('#o-daylbl-wrap').style.display=(isTG||isThumb)?'none':'';$('#o-daylbl-wrap').querySelector('span').textContent=isDay?'Day label (leave empty for automatic)':'Right-hand label (leave empty for automatic)';$('#o-photo-wrap').style.display=isT?'none':'';
+ $('#o-lang').value=O.lang;renderGS();renderCmp();renderAch();$('#o-lang-wrap').style.display=isThumb?'none':'';{const G=groupOf(O.tpl);$('#o-tsize-wrap').style.display=G?'':'none';if(G){$('#o-tsize-l').textContent=G.label;$('#o-tsize').innerHTML=G.items.map(([k,l])=>`<option value="${k}" ${k===O.tpl?'selected':''}>${esc(l)}</option>`).join('');}}$('#o-src-wrap').style.display=isTG?'':'none';$('#o-src').value=O.src;$('#o-photo-y').value=O.photoY;$('#o-photo-z').value=O.photoZ;$('#o-photo-x').value=O.photoX;syncPhotoX();
+ $('#b-zip').style.display=isDay?'':'none';
+ const AR=O.lang==='ar';
+ $('#o-title').placeholder=isThumb?'HIGHLIGHTS':isTG?(AR?`الجولة ${tableRows(opts()).mw}`:`MW ${tableRows(opts()).mw}`):O.tpl==='dayfix'?(AR?`الجولة ${mw}`:`MW ${mw}`):O.tpl==='mwfix'?(AR?'المباريات':'FIXTURES'):(AR?'النتائج':'RESULTS');$('#o-daylbl').placeholder=isDay?(AR?weekdayAr(rd):weekday(rd)):(AR?`الجولة ${mw}`:`MW ${mw}`);
+ const o=opts();let hint='';
+ if(isTG){const T=tableRows(o);hint=(O.tpl!=='table'?(O.tpl==='top4'?'Top 4 of the ':'Bottom 4 of the '):'')+T.official?`Official SAFF table after matchweek ${T.mw}${S.sync&&S.sync.at?', synced '+new Date(S.sync.at).toLocaleString():''}.`:`Calculated from every result up to matchweek ${o.mw} (points, goal difference, goals scored). Set Matchweek to Automatic to use the official SAFF table.`;}
+ else if(!isDay){const ms=mwMatches(o.mw);hint=`${ms.length} matches in matchweek ${o.mw}${ms.some(m=>!isPlayed(m))&&O.tpl==='mwres'?' (unplayed matches show their kick-off time)':''}.`;}
+ else{const n=dayMatches(o).length;hint=`${n} match${n===1?'':'es'} on ${weekday(o.day)} ${o.day||''}. Cards resize to fit the number of matches.`;}
+ if(O.tpl==='cmp')hint='Type the players and stats. Add or remove rows: the box grows or shrinks to fit.';
+ if(O.tpl==='gs'){const sc=S.scorers;hint=sc&&sc.list&&sc.list.length?`Top scorers from spl.com.sa${sc.at?', updated '+new Date(sc.at).toLocaleString():''}.`:'No goalscorer stats yet. They load with the next spl.com.sa sync.';}
+ if(O.tpl==='ft'){const m=ftMatch(o);hint=m&&!isPlayed(m)?'This match has no result yet; the score appears once it is played.':'Pick the match, then type the scorers. The score comes from the synced results.';}
+ $('#o-hint').textContent=hint;
+ renderFT(o);
+ scheduleDraw();}
+function renderFT(o){const on=O.tpl==='ft'||O.tpl==='thumb';$('#o-ft-wrap').style.display=on?'':'none';if(!on)return;
+ $('#o-daylbl-wrap').style.display='none';$('#o-title').closest('label').style.display=O.tpl==='thumb'?'':'none';
+ $$('#o-ft-wrap .row, #o-ft-wrap .note').forEach(e=>e.style.display=O.tpl==='thumb'?'none':'');
+ const ms=mwMatches(o.mw);const cur=ftMatch(o);O.ftMatch=cur?cur.id:'';
+ $('#o-ftmatch').innerHTML=ms.map(m=>`<option value="${m.id}" ${cur&&m.id===cur.id?'selected':''}>${esc(team(m.home)?.en)} ${isPlayed(m)?m.hs+'–'+m.as:'v'} ${esc(team(m.away)?.en)}</option>`).join('');
+ const F=scF();
+ if(cur){const sfx=F?' scorers (Arabic)':' scorers';$('#o-hsc-l').textContent=(team(cur.home)?.en||'Home')+sfx;$('#o-asc-l').textContent=(team(cur.away)?.en||'Away')+sfx;
+  $('#o-hsc').dir=$('#o-asc').dir=F?'rtl':'ltr';
+  $('#o-hsc').placeholder=F?(cur.homeScorers||'رونالدو 64'):'Ronaldo 64';$('#o-asc').placeholder=F?(cur.awayScorers||'رونالدو 64'):'Ronaldo 64';
+  if(document.activeElement!==$('#o-hsc'))$('#o-hsc').value=cur['homeScorers'+F]||'';if(document.activeElement!==$('#o-asc'))$('#o-asc').value=cur['awayScorers'+F]||'';}}
+function renderAch(){const on=O.tpl==='achA'||O.tpl==='achB';$('#o-ach-wrap').style.display=on?'':'none';if(!on)return;
+ $('#o-daylbl-wrap').style.display='none';$('#o-title').closest('label').style.display='none';$('#o-mw').closest('label').style.display='none';
+ const T=O.ach[O.lang==='ar'?'ar':'en'];['t','s'].forEach(k=>{const el=$('#o-ach-'+k);el.dir=O.lang==='ar'?'rtl':'ltr';if(document.activeElement!==el)el.value=T[k]||'';});
+ $('#o-ach-cut').style.display=$('#o-ach-note').style.display=$('#o-ach-box').style.display=O.tpl==='achB'?'':'none';$('#o-ach-bs').value=O.achBoxS;$('#o-ach-by').value=O.achBoxY;}
+$('#o-ach-bs').oninput=e=>{O.achBoxS=+e.target.value;scheduleDraw();};$('#o-ach-by').oninput=e=>{O.achBoxY=+e.target.value;scheduleDraw();};
+['t','s'].forEach(k=>{$('#o-ach-'+k).oninput=e=>{O.ach[O.lang==='ar'?'ar':'en'][k]=e.target.value;scheduleDraw();};});
+$('#o-ach-auto').onclick=()=>runCutout();
+$('#o-ach-cut').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const d=await resizeImage(f,2400,'image/png');PHOTO_MEM.achP=d;e.target.value='';renderStudio();});
+function renderCmp(){const on=O.tpl==='cmp';$('#o-cmp-wrap').style.display=on?'':'none';$('#o-mw').closest('label').style.display=(on||O.tpl==='achA'||O.tpl==='achB')?'none':'';if(!on)return;
+ $('#o-daylbl-wrap').style.display='none';$('#o-title').closest('label').style.display='none';$('#o-photo').closest('.btns').style.display='none';
+ const ae=document.activeElement;if(ae&&ae.tagName==='INPUT'&&ae.type==='text'&&$('#o-cmp-wrap').contains(ae))return;const L=O.lang,C=O.cmp; // don't rebuild while typing
+ $('#o-cmp-players').innerHTML=C.p.map((p,j)=>`<div class="row"><label class="f" style="flex:0 0 42%"><span>Player ${j+1} club</span><select data-cp="${j}" data-f="team">${S.teams.map(t=>`<option value="${t.id}" ${t.id===p.team?'selected':''}>${esc(t.en)}</option>`).join('')}</select></label><label class="f"><span>Name${L==='ar'?' (Arabic)':''}</span><input type="text" data-cp="${j}" data-f="${L}" ${L==='ar'?'dir="rtl"':''} value="${esc(p[L]||'')}"></label></div>`).join('');
+ $('#o-cmp-rows').innerHTML=C.rows.map((r,i)=>`<div class="row" style="margin-top:6px"><input type="text" data-cr="${i}" data-f="l" value="${esc(r.l)}" style="flex:0 0 18%;text-align:center"><input type="text" data-cr="${i}" data-f="${L}" ${L==='ar'?'dir="rtl"':''} value="${esc(r[L]||'')}" placeholder="${L==='ar'?'الإحصائية':'Stat'}"><input type="text" data-cr="${i}" data-f="r" value="${esc(r.r)}" style="flex:0 0 18%;text-align:center"><button class="btn sm danger" data-del="${i}" type="button" style="flex:0 0 auto" title="Remove row">×</button></div>`).join('');}
+$('#o-cmp-wrap').addEventListener('input',e=>{const d=e.target.dataset;if(d.cp!=null)O.cmp.p[+d.cp][d.f]=e.target.value;else if(d.cr!=null)O.cmp.rows[+d.cr][d.f]=e.target.value;else return;scheduleDraw();});
+$('#o-cmp-wrap').addEventListener('change',e=>{const d=e.target.dataset;if(d.cp!=null&&d.f==='team'){O.cmp.p[+d.cp].team=e.target.value;scheduleDraw();}
+ const k=d.slot;if(k&&e.target.files&&e.target.files[0]){resizeImage(e.target.files[0],3400,'image/jpeg',0.86).then(u=>{PHOTO_MEM[k]=u;e.target.value='';renderStudio();});}});
+$('#o-cmp-wrap').addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(b){if(O.cmp.rows.length>1){O.cmp.rows.splice(+b.dataset.del,1);document.activeElement.blur();renderStudio();}else toast('Keep at least one row.');}});
+$('#o-cmp-add').onclick=()=>{if(O.cmp.rows.length>=8){toast('Up to 8 rows.');return;}O.cmp.rows.push({en:'',ar:'',l:'0',r:'0'});renderStudio();const ins=$$('#o-cmp-rows input[data-f="'+O.lang+'"]');ins[ins.length-1]?.focus();};
+function renderGS(){const on=O.tpl==='gs';$('#o-gs-wrap').style.display=on?'':'none';if(!on)return;
+ $('#o-daylbl-wrap').style.display='none';$('#o-title').closest('label').style.display='';$('#o-title').placeholder=O.lang==='ar'?'ترتيب الهدافين':'TOP GOAL SCORERS';
+ renderGSNames();
+ $('#o-gsn').value=String(O.gsN);$('#o-gssplit').value=O.gsSplit?'1':'0';
+ $('#o-photo').closest('.btns').style.display=O.gsSplit?'none':'';
+ const L=scorersList();$('#o-gs-uploads').innerHTML=O.gsSplit?Array.from({length:O.gsN},(_,i)=>`<label class="btn sm">Photo ${i+1}${L[i]?' · '+esc(L[i].en):''}<input type="file" accept="image/*" data-slot="gs${i+1}" hidden></label>`).join(''):'';}
+function renderGSNames(){const L=scorersList(),ar=O.lang==='ar',cur=(O.gsNames[O.lang]||[]);
+ if($('#o-gs-names').contains(document.activeElement))return;
+ $('#o-gs-names').innerHTML=Array.from({length:O.gsN},(_,i)=>{const d=L[i]?(ar?(L[i].ar||L[i].en):L[i].en):'';return `<label class="f"><span>Player ${i+1} name${L[i]?' · '+L[i].goals+' goals':''}</span><input type="text" data-gsi="${i}" ${ar?'dir="rtl"':''} value="${esc(cur[i]||'')}" placeholder="${esc(d)}"></label>`}).join('');}
+$('#o-gs-names').addEventListener('input',e=>{const i=+e.target.dataset.gsi;if(isNaN(i))return;(O.gsNames[O.lang]=O.gsNames[O.lang]||[])[i]=e.target.value;scheduleDraw();});
+$('#o-gsn').onchange=e=>{O.gsN=+e.target.value;renderStudio();};
+$('#o-gssplit').onchange=e=>{O.gsSplit=e.target.value==='1';renderStudio();};
+$('#o-gs-uploads').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0],k=e.target.dataset.slot;if(!f||!k)return;const d=await resizeImage(f,3400,'image/jpeg',0.86);PHOTO_MEM[k]=d;e.target.value='';renderStudio();});
+function scF(){return O.lang==='ar'?'Ar':'';}
+$('#o-ftmatch').onchange=e=>{O.ftMatch=e.target.value;renderStudio();};
+function saveScorers(field,val){const m=S.matches.find(x=>x.id===O.ftMatch);if(!m)return;m[field]=val;markDirty(mwPath(m.mw));scheduleDraw();}
+$('#o-hsc').oninput=e=>{const m=S.matches.find(x=>x.id===O.ftMatch);if(m){m['homeScorers'+scF()]=e.target.value;scheduleDraw();}};
+$('#o-asc').oninput=e=>{const m=S.matches.find(x=>x.id===O.ftMatch);if(m){m['awayScorers'+scF()]=e.target.value;scheduleDraw();}};
+$('#o-hsc').onchange=e=>saveScorers('homeScorers'+scF(),e.target.value);
+$('#o-asc').onchange=e=>saveScorers('awayScorers'+scF(),e.target.value);
+$('#tpls').addEventListener('click',e=>{const b=e.target.closest('[data-tpl]');if(!b)return;O.tpl=b.dataset.tpl;$('#o-title').closest('label').style.display='';O.day='auto';O.title='';$('#o-title').value='';renderStudio();});
+$('#o-mw').onchange=e=>{O.mw=e.target.value;O.day='auto';O.ftMatch='';renderStudio();};
+$('#o-day').onchange=e=>{O.day=e.target.value;renderStudio();};
+$('#o-lang').onchange=e=>{O.lang=e.target.value;renderStudio();};
+$('#o-tsize').onchange=e=>{O.tpl=e.target.value;O.day='auto';if(!TEMPLATES[O.tpl].enOnly)$('#o-title').closest('label').style.display='';renderStudio();};
+$('#o-src').onchange=e=>{O.src=e.target.value;renderStudio();};
+$('#o-title').oninput=e=>{O.title=e.target.value;scheduleDraw();};
+$('#o-daylbl').oninput=e=>{O.dayLabel=e.target.value;scheduleDraw();};
+$('#o-photo-y').oninput=e=>{O.photoY=+e.target.value;scheduleDraw();};
+function syncPhotoX(){$('#o-photo-x-wrap').style.display=O.photoZ>100?'':'none';}
+$('#o-photo-z').oninput=e=>{O.photoZ=+e.target.value;if(O.photoZ<=100)O.photoX=50,$('#o-photo-x').value=50;syncPhotoX();scheduleDraw();};
+$('#o-photo-x').oninput=e=>{O.photoX=+e.target.value;scheduleDraw();};
+$('#o-photo-reset').onclick=()=>{O.photoZ=100;O.photoX=50;O.photoY=30;renderStudio();scheduleDraw();};
+$('#o-photo').onchange=async e=>{const f=e.target.files[0];if(!f)return;const d=await resizeImage(f,3400,'image/jpeg',0.86);PHOTO_MEM[O.tpl]=d;e.target.value='';
+ if(O.tpl==='achB'){PHOTO_MEM.achP=false;renderStudio();runCutout();return;}renderStudio();};
+function canvasBlob(cv,type,q){return new Promise(r=>cv.toBlob(r,type||'image/png',q));}
+const jpg=cv=>canvasBlob(cv,'image/jpeg',0.9);
+async function saveBlob(name,blob){
+ if(DL){try{await DL.save({filename:name,data:blob});toast('Saved '+name);return;}
+  catch(e){const c=e&&e.code;if(c==='declined'){toast('Download cancelled');return;}if(c==='rate_limited'){toast('A download is already waiting. Try again in a moment.');return;}}}
+ if(SITE){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Downloaded '+name);return;}
+ const url=URL.createObjectURL(blob);const isImg=blob.type.startsWith('image/');
+ openDlg(`<h2>${esc(name)}</h2><p class="note" style="margin-top:0">${isImg?'Right-click the image (or long-press on a phone) and choose Save.':'Click the link to download.'}</p>${isImg?`<img src="${url}" alt="">`:`<p><a class="btn pri" href="${url}" download="${esc(name)}">Download ${esc(name)}</a></p>`}<div class="btns"><button class="btn" data-close>Close</button></div>`);}
+function collectImgs(o){const l=[A.tableBg,A.rsl,A.panel,A.panelMW,A.ftBox,A.ftBoxTall,A.panelT4,A.panelCmp,A.boxAchA,A.boxAchB,A.panelThumb,A.panelGS,...Object.keys(A.photo).map(photoSrc)];S.teams.forEach(t=>{l.push(logoColor(t),logoMono(t));});return l.filter(Boolean);}
+function exportScale(o){return 2160/TEMPLATES[o.tpl].W;} // every export is 2160 px wide (2x of 1080)
+function fileName(o){return fileName0(o)+(o.lang==='ar'?'_AR':'');}
+function fileName0(o){if(o.tpl==='achA'||o.tpl==='achB')return `RSL_Achievement_${(O.ach.en.s||O.ach.en.t||'').replace(/\W+/g,'')}`;
+ if(o.tpl==='cmp')return `RSL_Comparison_${(O.cmp.p[0].en||'P1').replace(/\W+/g,'')}_${(O.cmp.p[1].en||'P2').replace(/\W+/g,'')}`;
+ if(o.tpl==='gs')return `RSL_TopScorers_Top${o.gsN}`;
+ if(o.tpl==='thumb'){const m=ftMatch(o);return `RSL_Thumbnail_MW${pad2(o.mw)}_${m?(team(m.home)?.short+'-'+team(m.away)?.short):''}`;}
+ if(o.tpl==='top4'||o.tpl==='bot4')return `RSL_Table_${o.tpl==='top4'?'Top4':'Bottom4'}_MW${pad2(tableRows(o).mw)}`;
+ if(o.tpl==='ft'){const m=ftMatch(o);return `RSL_FullTime_MW${pad2(o.mw)}_${m?(team(m.home)?.short+'-'+team(m.away)?.short):''}`;}
+ if(o.tpl==='table')return `RSL_Table_MW${pad2(tableRows(o).mw)}`;const T=TEMPLATES[o.tpl];return `RSL_${T.fix?'Fixtures':'Results'}_MW${pad2(o.mw)}${T.day?'_'+weekday(o.day):''}`;}
+$('#b-png').onclick=async()=>{await fontsReady;const o=opts();await Promise.all(collectImgs(o).map(loadImg));const cv=document.createElement('canvas');drawTo(cv,o,exportScale(o));saveBlob(fileName(o)+'.jpg',await jpg(cv));};
+$('#b-zip').onclick=async()=>{if(!window.JSZip){toast('The ZIP library didn\'t load. Download each day one at a time instead.');return;}
+ await fontsReady;const o0=opts();await Promise.all(collectImgs(o0).map(loadImg));const zip=new JSZip();const cv=document.createElement('canvas');
+ for(const d of mwDays(o0.mw)){const o={...o0,day:d,dayLabel:''};if(!dayMatches(o).length)continue;drawTo(cv,o,exportScale(o));zip.file(fileName(o)+'.jpg',await jpg(cv));}
+ saveBlob(`RSL_${TEMPLATES[o0.tpl].fix?'Fixtures':'Results'}_MW${pad2(o0.mw)}_days${o0.lang==='ar'?'_AR':''}.zip`,await zip.generateAsync({type:'blob'}));};
+
+/* ============ matches UI ============ */
+let curMw=null;
+function teamOptions(sel){return S.teams.map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${esc(t.en)}</option>`).join('');}
+function renderMatches(){const list=mwList();if(curMw==null||!list.includes(curMw))curMw=nextMw()||list[0]||1;
+ $('#sched-banner').style.display=S.placeholder?'':'none';
+ $('#sync-stamp').textContent=S.sync&&S.sync.at?`Last synced from SAFF: ${new Date(S.sync.at).toLocaleString()}${S.sync.note?' · '+S.sync.note:''}`:'';
+ $('#mw-pick').innerHTML=(list.includes(curMw)?list:[...list,curMw].sort((a,b)=>a-b)).map(m=>`<option value="${m}" ${m===curMw?'selected':''}>Matchweek ${m}</option>`).join('');
+ const ms=mwMatches(curMw);
+ $('#mt').innerHTML=ms.map(m=>`<tr data-id="${m.id}">
+  <td><input type="date" data-f="date" value="${esc(m.date)}"></td><td><input type="time" data-f="time" value="${esc(m.time)}"></td>
+  <td><select data-f="home">${teamOptions(m.home)}</select></td>
+  <td class="sc"><input type="number" min="0" data-f="hs" value="${Number.isFinite(m.hs)?m.hs:''}"></td><td class="vs">–</td>
+  <td class="sc"><input type="number" min="0" data-f="as" value="${Number.isFinite(m.as)?m.as:''}"></td>
+  <td><select data-f="away">${teamOptions(m.away)}</select></td>
+  <td><input type="text" data-f="venue" value="${esc(m.venue)}" placeholder="Stadium (City)" title="City on the card: ${esc(cityOf(m))}"></td>
+  <td><button class="btn sm ghost danger" data-del title="Delete match">✕</button></td></tr>`).join('')||`<tr><td colspan="9" class="note" style="padding:16px">No matches in this matchweek yet.</td></tr>`;
+ const st=standings(curMw);$('#mini-h').textContent=`Table calculated from results up to matchweek ${curMw}`;
+ $('#mini').innerHTML=`<tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>`+st.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(team(r.id).en)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf-r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('');}
+$('#mt').addEventListener('change',e=>{const tr=e.target.closest('tr[data-id]');if(!tr)return;const m=S.matches.find(x=>x.id===tr.dataset.id);if(!m)return;const f=e.target.dataset.f;let v=e.target.value;
+ if(f==='hs'||f==='as'){v=v===''?null:Math.max(0,parseInt(v,10));if(!Number.isFinite(v))v=null;}
+ m[f]=v;markDirty(mwPath(m.mw));renderMatches();renderStudio();});
+$('#mt').addEventListener('click',e=>{if(!e.target.closest('[data-del]'))return;const tr=e.target.closest('tr[data-id]');const m=S.matches.find(x=>x.id===tr.dataset.id);
+ S.matches=S.matches.filter(x=>x!==m);markDirty(mwPath(m.mw));renderMatches();renderStudio();});
+$('#mw-pick').onchange=e=>{curMw=+e.target.value;renderMatches();};
+$('#mw-prev').onclick=()=>{const l=mwList();const i=l.indexOf(curMw);if(i>0){curMw=l[i-1];renderMatches();}};
+$('#mw-next').onclick=()=>{const l=mwList();const i=l.indexOf(curMw);if(i<l.length-1){curMw=l[i+1];renderMatches();}else{curMw=(l[l.length-1]||0)+1;renderMatches();}};
+$('#b-add').onclick=()=>{const prev=mwMatches(curMw).slice(-1)[0];S.matches.push({id:uid(),mw:curMw,date:prev?prev.date:'',time:prev?prev.time:'21:00',home:S.teams[0]?.id,away:S.teams[1]?.id,venue:'',hs:null,as:null});markDirty(mwPath(curMw));renderMatches();renderStudio();};
+$('#b-clear').onclick=()=>{mwMatches(curMw).forEach(m=>{m.hs=null;m.as=null});markDirty(mwPath(curMw));renderMatches();renderStudio();};
+$('#b-gen').onclick=()=>openDlg(`<h2>Generate season schedule</h2><p class="note" style="margin-top:0">Creates a double round-robin (each club plays every other club home and away) for all ${S.teams.length} clubs. <b>This replaces every match and score you have now, including the synced SAFF fixtures.</b></p>
+ <div class="row"><label class="f"><span>First matchweek date</span><input type="date" id="g-start" value="2026-08-13"></label><label class="f"><span>Days between matchweeks</span><input type="number" id="g-gap" value="7" min="1"></label><label class="f"><span>Kick-off time</span><input type="time" id="g-time" value="21:00"></label></div>
+ <div class="btns"><button class="btn pri" id="g-go">Replace schedule</button><button class="btn" data-close>Cancel</button></div>`,box=>{box.querySelector('#g-go').onclick=()=>{
+  const old=mwList();S.matches=genSchedule(S.teams.map(t=>t.id),box.querySelector('#g-start').value||'2026-08-13',+box.querySelector('#g-gap').value||7,box.querySelector('#g-time').value||'21:00');S.placeholder=true;
+  markDirty('league/settings',...new Set([...old,...mwList()].map(mwPath)));closeDlg();curMw=1;renderAll();toast('Schedule generated');};});
+const norm=s=>String(s||'').toLowerCase().replace(/ـ/g,'').replace(/^al[\s-]+/,'').replace(/[\s-]/g,'');
+function findTeam(name){const n=norm(name);if(!n)return null;return S.teams.find(t=>[t.id,t.short,t.en,t.ar].some(v=>norm(v)===n))||null;}
+$('#b-paste').onclick=()=>openDlg(`<h2>Paste fixtures / results</h2>
+ <p class="note" style="margin-top:0">Paste one match per line, separated by commas or tabs, so you can copy straight from Excel or Google Sheets:<br><code>Matchweek, Date (YYYY-MM-DD), Time, Home, Away, Home goals, Away goals, Venue</code><br>Goals and venue are optional. Clubs are matched by English name, Arabic name or short code. A line for a match that already exists in that matchweek updates it; any other line adds a new match.</p>
+ <textarea id="p-txt" rows="10" placeholder="13, 2026-11-26, 17:25, Al Fateh, Al Riyadh&#10;12, 2026-10-29, 21:00, Al Nassr, Al Kholood, 5, 3"></textarea>
+ <div class="btns"><button class="btn pri" id="p-go">Import</button><button class="btn" data-close>Cancel</button></div><p class="note" id="p-msg"></p>`,box=>{box.querySelector('#p-go').onclick=()=>{
+  const lines=box.querySelector('#p-txt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);let add=0,upd=0;const bad=[];const touched=new Set();
+  lines.forEach((l,i)=>{const p=l.split(/\t|,/).map(x=>x.trim());const mw=parseInt(p[0],10);if(!mw){if(i===0&&/match|mw|round|جولة/i.test(l))return;bad.push(l);return;}
+   const h=findTeam(p[3]),a=findTeam(p[4]);if(!h||!a){bad.push(l);return;}
+   const hs=p[5]===''||p[5]==null?null:parseInt(p[5],10),as=p[6]===''||p[6]==null?null:parseInt(p[6],10);
+   let m=S.matches.find(x=>x.mw===mw&&x.home===h.id&&x.away===a.id);
+   if(m){upd++;}else{m={id:`m${mw}-${h.id}-${a.id}`,mw,home:h.id,away:a.id,venue:'',date:'',time:'',hs:null,as:null};S.matches.push(m);add++;}
+   if(p[1])m.date=p[1];if(p[2])m.time=p[2];m.hs=Number.isFinite(hs)?hs:null;m.as=Number.isFinite(as)?as:null;if(p[7])m.venue=p[7];touched.add(mwPath(mw));});
+  markDirty(...touched);renderAll();
+  box.querySelector('#p-msg').innerHTML=`Added ${add}, updated ${upd}.`+(bad.length?`<br>Couldn't read ${bad.length} line(s), usually because a club name didn't match: <code>${esc(bad.slice(0,3).join(' | '))}</code>`:'');};});
+
+/* ============ clubs UI ============ */
+function renderTeams(){
+ $('#teams').innerHTML=S.teams.map(t=>{const lc=logoColor(t),lm=logoMono(t);return `<div class="tcard" data-tid="${t.id}">
+  <div class="hd">
+   <label class="logo-drop" style="background:${esc(t.color)};border-style:solid" title="Colour crest (cards)">${lc?`<img src="${esc(lc)}" alt="">`:esc(t.short)}<em>colour</em><input type="file" accept="image/*" data-up="logo" hidden></label>
+   <label class="logo-drop" style="background:#0d1424;border-style:solid" title="White crest (table)">${lm?`<img src="${esc(lm)}" alt="">`:esc(t.short)}<em>white</em><input type="file" accept="image/*" data-up="mono" hidden></label>
+   <div style="flex:1;min-width:0"><input type="text" data-f="en" value="${esc(t.en)}" placeholder="English name"><input type="text" class="ar" data-f="ar" value="${esc(t.ar)}" placeholder="الاسم بالعربية"></div></div>
+  <div class="row"><input type="text" data-f="short" value="${esc(t.short)}" maxlength="4" title="Short code" placeholder="CODE"><input type="color" data-f="color" value="${esc(t.color)}" style="flex:none" title="Card colour"><input type="color" data-f="nameColor" value="${esc(nameCol(t))}" style="flex:none" title="Name colour on cards"><input type="number" data-f="adj" value="${+t.adj||0}" title="Points adjustment for the calculated table (e.g. -3)" placeholder="Pts adj"></div>
+  <div class="btns" style="margin-top:8px">${t.logo?'<button class="btn sm ghost" data-rm="logo">Reset colour crest</button>':''}${t.mono?'<button class="btn sm ghost" data-rm="mono">Reset white crest</button>':''}<button class="btn sm ghost danger" data-rmteam>Delete club</button></div></div>`}).join('');}
+$('#teams').addEventListener('change',async e=>{const card=e.target.closest('[data-tid]');if(!card)return;const t=team(card.dataset.tid);
+ if(e.target.dataset.up){const f=e.target.files[0];if(!f)return;try{t[e.target.dataset.up]=await resizeImage(f,300,'image/png');}catch(x){toast('Couldn\'t read that image');return;}}
+ else{const f=e.target.dataset.f;t[f]=f==='adj'?(parseInt(e.target.value,10)||0):f==='short'?e.target.value.toUpperCase():e.target.value;}
+ markDirty('teams/'+t.id);renderTeams();renderMatches();renderStudio();});
+$('#teams').addEventListener('click',e=>{const card=e.target.closest('[data-tid]');if(!card)return;const t=team(card.dataset.tid);
+ const rm=e.target.closest('[data-rm]');if(rm){t[rm.dataset.rm]=null;markDirty('teams/'+t.id);renderTeams();renderStudio();}
+ if(e.target.closest('[data-rmteam]')){const used=S.matches.some(m=>m.home===t.id||m.away===t.id);
+  openDlg(`<h2>Delete ${esc(t.en)}?</h2><p class="note">${used?'This club has matches in the schedule. Those matches will be deleted too.':'This club has no matches.'}</p><div class="btns"><button class="btn pri" id="d-go">Delete</button><button class="btn" data-close>Cancel</button></div>`,box=>{box.querySelector('#d-go').onclick=()=>{
+   const mws=new Set(S.matches.filter(m=>m.home===t.id||m.away===t.id).map(m=>mwPath(m.mw)));S.matches=S.matches.filter(m=>m.home!==t.id&&m.away!==t.id);S.teams=S.teams.filter(x=>x!==t);
+   markDirty('teams/'+t.id,...mws);closeDlg();renderAll();};});}});
+$('#b-addteam').onclick=()=>{const id='t'+uid().slice(0,5);S.teams.push({id,en:'New Club',ar:'',short:'NEW',color:'#777777',logo:null,mono:null,adj:0,order:S.teams.length});markDirty('teams/'+id);renderTeams();};
+
+/* ============ settings UI ============ */
+function renderSettings(){
+ $('#s-seps').value=(S.settings.separators||[]).join(', ');
+ $('#fonts').innerHTML=FONT_LIST.map(([n,u])=>`<div class="fontrow"><div><b>${esc(n)}</b><small>${esc(u)}</small></div><span class="st ok">Built in</span></div>`).join('');}
+$('#v-settings').addEventListener('change',async e=>{
+ if(e.target.id==='s-seps'){S.settings.separators=e.target.value.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>n>0&&n<18);markDirty('league/settings');renderSettings();renderStudio();return;}
+ if(e.target.dataset.font){const f=e.target.files[0];if(!f)return;const slot=FONT_SLOTS.find(s=>s.key===e.target.dataset.font);const d=await readFile(f);
+  if(await registerFont(slot,d)){if(!lsSet('rsl-font-'+slot.key,d))toast('Font loaded for now, but it is too large to keep after you reload.');else toast(slot.label+' loaded');}else toast('That file could not be read as a font');
+  renderSettings();scheduleDraw();return;}
+ if(e.target.id==='import-file'){const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.teams)||!Array.isArray(d.matches))throw 0;
+   const oldT=S.teams.map(t=>'teams/'+t.id),oldM=mwList().map(mwPath);S={settings:{...defaultSettings(),...d.settings},teams:d.teams,matches:d.matches,placeholder:!!d.placeholder,official:S.official,sync:S.sync};
+   markDirty('league/settings',...new Set([...oldT,...S.teams.map(t=>'teams/'+t.id),...oldM,...mwList().map(mwPath)]));renderAll();toast('Data imported');}catch(x){toast('That file isn\'t a Graphics Studio export')}e.target.value='';}});
+$('#v-settings').addEventListener('click',e=>{
+ if(e.target.dataset.fontrm){lsDel('rsl-font-'+e.target.dataset.fontrm);toast('Removed. Reload the page to switch back to the stand-in font.');renderSettings();}
+ if(e.target.id==='b-export'){saveBlob('rsl-studio-data.json',new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));}
+ if(e.target.id==='b-reset'){openDlg(`<h2>Reset everything?</h2><p class="note">This replaces all clubs, crests you uploaded, fixtures, results and settings with the defaults, for everyone using this studio. The next SAFF sync will bring the official fixtures back.</p><div class="btns"><button class="btn pri" id="r-go">Reset</button><button class="btn" data-close>Cancel</button></div>`,box=>{box.querySelector('#r-go').onclick=()=>{
+  const oldT=S.teams.map(t=>'teams/'+t.id),oldM=mwList().map(mwPath);S=defaultState();markDirty('league/settings',...new Set([...oldT,...S.teams.map(t=>'teams/'+t.id),...oldM,...mwList().map(mwPath)]));closeDlg();renderAll();};});}});
+
+/* ============ dialog, nav, boot ============ */
+function openDlg(html,bind){$('#dlg-box').innerHTML=html;$('#dlg').classList.add('on');if(bind)bind($('#dlg-box'));}
+function closeDlg(){$('#dlg').classList.remove('on');}
+$('#dlg').addEventListener('click',e=>{if(e.target.id==='dlg'||e.target.closest('[data-close]'))closeDlg();});
+// Only editors (admins) see the other tabs; everyone else gets the Studio only.
+let ADMIN=false;
+function show(view){if(!ADMIN)view='studio';$$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+view));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));}
+$('#nav').onclick=e=>{const b=e.target.closest('[data-view]');if(!b)return;show(b.dataset.view);try{history.replaceState(null,'','#'+b.dataset.view)}catch(x){location.hash=b.dataset.view}};
+function fromHash(){const h=location.hash.slice(1);if(['studio','matches','teams','settings'].includes(h))show(h);}
+window.addEventListener('hashchange',fromHash);
+function renderAll(){renderStudio();renderMatches();renderTeams();renderSettings();}
+renderAll();fromHash();setSync(SITE?'loading':'local');
+if(SITE){selfUpdate();gate();const n=$('#sc-save-note');if(n)n.textContent='Scorers fill in automatically; changes here only affect your graphic.';}
+// Website: if a newer version of this page has been published, load it (browsers keep an old copy for up to 10 minutes).
+async function selfUpdate(){try{const me=(document.querySelector('meta[name="rsl-build"]')||{}).content;if(!me)return;
+ const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text();const m=t.match(/name="rsl-build" content="([^"]+)"/);
+ if(m&&m[1]!==me&&sessionStorage.getItem('rsl-reloaded')!==m[1]){sessionStorage.setItem('rsl-reloaded',m[1]);location.replace(location.pathname+'?v='+m[1]);}}catch(e){}}
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function gate(){const H=(document.querySelector('meta[name="rsl-pass"]')||{}).content;if(!H||lsGet('rsl-pass')===H)return;
+ const g=document.createElement('div');g.id='gate';g.innerHTML=`<form><img src="assets/rsl_logo.png" alt=""><b>GFX Studio</b><input type="password" placeholder="Team password" autocomplete="current-password"><button class="btn pri" type="submit">Enter</button><p></p></form>`;
+ document.body.appendChild(g);const inp=g.querySelector('input');setTimeout(()=>inp.focus(),50);
+ g.querySelector('form').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim().replace(/[\u0660-\u0669]/g,d=>d.charCodeAt(0)-0x660).replace(/[\u06F0-\u06F9]/g,d=>d.charCodeAt(0)-0x6F0);if(await sha(v)===H){lsSet('rsl-pass',H);g.remove();}else{g.querySelector('p').textContent='Wrong password';inp.select();}};}
+document.body.classList.add('team');
+(async()=>{let u=null;try{u=window.claude&&window.claude.use?await window.claude.use('user'):null}catch(e){u=null}
+ if(!u)return;let ok=false;try{ok=!!(await u.canEdit())||!!(await u.isOwner());}catch(e){}
+ if(ok){ADMIN=true;document.body.classList.remove('team');fromHash();}})();
+loadStoredFonts().then(()=>fontsReady).then(()=>{renderSettings();scheduleDraw();});
+fontsReady.then(()=>scheduleDraw());
+dbInit();
+</script>
+</body>
+</html>
