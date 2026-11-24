@@ -2,6 +2,8 @@
 
 Web app that makes Roshn Saudi League graphics (EN + AR) from live data, exported as 2160px-wide JPGs.
 
+See PROJECTS.md for the design projects in `projects/`.
+
 ## Layout
 - `studio/index.html` — the whole app (single file, canvas drawing in PSD pixel coordinates).
   Key functions: drawTable, drawMW, drawDay, drawFT, drawThumb, drawGS, drawShort, drawCmp, drawAch, nineSlice, autoCutout. Templates: TEMPLATES / GROUPS.
